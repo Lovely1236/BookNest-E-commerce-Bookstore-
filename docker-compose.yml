@@ -110,6 +110,21 @@ services:
         - SPRING_DATASOURCE_USERNAME=root
         - SPRING_DATASOURCE_PASSWORD=root
         - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+
+  # ---------------- NOTIFICATION SERVICE ----------------
+  notification-service:
+      build: ./notification-service
+      container_name: notification-service
+      ports:
+        - "8088:8087"
+      depends_on:
+        - eureka-server
+        - mysql
+      environment:
+        - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/notification_db
+        - SPRING_DATASOURCE_USERNAME=root
+        - SPRING_DATASOURCE_PASSWORD=root
+        - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
 volumes:
   mysql_data:
 
