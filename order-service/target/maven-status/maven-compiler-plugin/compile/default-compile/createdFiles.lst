@@ -1,0 +1,9 @@
+org\example\orderservice\entity\Order.class
+org\example\orderservice\repository\OrderRepository.class
+org\example\orderservice\service\impl\OrderServiceImpl.class
+org\example\orderservice\controller\OrderResource.class
+org\example\orderservice\service\OrderService.class
+org\example\orderservice\OrderServiceApplication.class
+org\example\orderservice\repository\AddressRepository.class
+org\example\orderservice\entity\Book.class
+org\example\orderservice\entity\Address.class
