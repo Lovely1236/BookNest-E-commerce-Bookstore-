@@ -125,6 +125,21 @@ services:
         - SPRING_DATASOURCE_USERNAME=root
         - SPRING_DATASOURCE_PASSWORD=root
         - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+
+  # ---------------- WISHLIST SERVICE ----------------
+  wishlist-service:
+      build: ./wishlist-service
+      container_name: wishlist-service
+      ports:
+        - "8089:8088"
+      depends_on:
+        - eureka-server
+        - mysql
+      environment:
+        - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/wishlist_db
+        - SPRING_DATASOURCE_USERNAME=root
+        - SPRING_DATASOURCE_PASSWORD=root
+        - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
 volumes:
   mysql_data:
 
