@@ -42,9 +42,13 @@ services:
     container_name: book-service
     depends_on:
       - eureka-server
+      - mysql
     ports:
-      - "8082:8082"
+      - "8086:8082"
     environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/bookdb
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
 
     # --------------CART SERVICE --------------------
@@ -73,6 +77,21 @@ services:
         - mysql
       environment:
         - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/order_db
+        - SPRING_DATASOURCE_USERNAME=root
+        - SPRING_DATASOURCE_PASSWORD=root
+        - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+
+  # ---------------- WALLET SERVICE ----------------
+  wallet-service:
+      build: ./wallet-service
+      container_name: wallet-service
+      ports:
+        - "8085:8085"
+      depends_on:
+        - eureka-server
+        - mysql
+      environment:
+        - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/wallet_db
         - SPRING_DATASOURCE_USERNAME=root
         - SPRING_DATASOURCE_PASSWORD=root
         - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
