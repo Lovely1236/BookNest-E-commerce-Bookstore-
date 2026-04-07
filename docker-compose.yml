@@ -95,6 +95,21 @@ services:
         - SPRING_DATASOURCE_USERNAME=root
         - SPRING_DATASOURCE_PASSWORD=root
         - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+
+  # ---------------- REVIEW SERVICE ----------------
+  review-service:
+      build: ./review-service
+      container_name: review-service
+      ports:
+        - "8087:8086"
+      depends_on:
+        - eureka-server
+        - mysql
+      environment:
+        - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/review_db
+        - SPRING_DATASOURCE_USERNAME=root
+        - SPRING_DATASOURCE_PASSWORD=root
+        - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
 volumes:
   mysql_data:
 
