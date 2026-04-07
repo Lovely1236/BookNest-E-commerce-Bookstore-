@@ -1,0 +1,8 @@
+org\example\walletservice\entity\Wallet.class
+org\example\walletservice\WalletServiceApplication.class
+org\example\walletservice\repository\WalletRepository.class
+org\example\walletservice\controller\WalletResource.class
+org\example\walletservice\entity\Statement.class
+org\example\walletservice\repository\StatementsRepository.class
+org\example\walletservice\service\WalletService.class
+org\example\walletservice\service\impl\WalletServiceImpl.class
