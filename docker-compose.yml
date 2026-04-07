@@ -2,18 +2,19 @@ version: '3.8'
 
 services:
 
-  # ---------------- MYSQL ----------------
+# ---------------- MYSQL ----------------
   mysql:
-   image: mysql:8
-   container_name: booknest-mysql
-   restart: always
-   environment:
-     MYSQL_ROOT_PASSWORD: root
-     MYSQL_DATABASE: booknest_auth
-   ports:
-    - "3307:3306"
-   volumes:
-    - mysql_data:/var/lib/mysql# ---------------- EUREKA ----------------
+    image: mysql:8
+    container_name: booknest-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+# ---------------- EUREKA ----------------
   eureka-server:
     build: ./eureka-server
     container_name: eureka-server
@@ -46,5 +47,20 @@ services:
     environment:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
 
+    # --------------CART SERVICE --------------------
+  cart-service:
+      build: ./cart-service
+      container_name: cart-service
+      ports:
+        - "8083:8083"
+      depends_on:
+        - eureka-server
+        - mysql
+      environment:
+        - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/cart_db
+        - SPRING_DATASOURCE_USERNAME=root
+        - SPRING_DATASOURCE_PASSWORD=root
+        - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
 volumes:
   mysql_data:
+
