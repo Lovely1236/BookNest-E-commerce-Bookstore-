@@ -1,0 +1,6 @@
+org\example\notificationservice\controller\NotificationResource.class
+org\example\notificationservice\repository\NotificationRepository.class
+org\example\notificationservice\entity\Notification.class
+org\example\notificationservice\service\NotificationService.class
+org\example\notificationservice\service\impl\NotificationServiceImpl.class
+org\example\notificationservice\NotificationServiceApplication.class
