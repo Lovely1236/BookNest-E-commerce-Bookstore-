@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Notifications</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav}"></div>
+<main class="page">
+    <section class="card">
+        <h1>Notifications</h1>
+        <p>Unread Count: <strong th:text="${unreadCount}">0</strong></p>
+        <div class="list">
+            <article class="list-item" th:each="notification : ${notifications}">
+                <strong th:text="${notification['type']}">ORDER</strong>
+                <p th:text="${notification['message']}">Message</p>
+            </article>
+        </div>
+    </section>
+</main>
+</body>
+</html>

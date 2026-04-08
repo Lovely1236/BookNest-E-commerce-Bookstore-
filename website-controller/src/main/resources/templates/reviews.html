@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Reviews</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav}"></div>
+<main class="page">
+    <section class="card">
+        <h1>Moderate Reviews</h1>
+        <div class="list">
+            <article class="list-item" th:each="review : ${reviews}">
+                <p>Book ID: <span th:text="${review['bookId']}">1</span></p>
+                <p th:text="${review['comment']}">Comment</p>
+                <form action="/admin/review/moderate" method="post">
+                    <input type="hidden" name="reviewId" th:value="${review['reviewId']}">
+                    <button class="button secondary" type="submit">Delete Review</button>
+                </form>
+            </article>
+        </div>
+    </section>
+</main>
+</body>
+</html>

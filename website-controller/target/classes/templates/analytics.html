@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Analytics</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav}"></div>
+<main class="page">
+    <div class="grid three">
+        <section class="card"><span>Total Orders</span><strong th:text="${orders}">0</strong></section>
+        <section class="card"><span>Total Reviews</span><strong th:text="${reviews}">0</strong></section>
+        <section class="card"><span>Notifications</span><strong th:text="${notifications}">0</strong></section>
+    </div>
+</main>
+</body>
+</html>

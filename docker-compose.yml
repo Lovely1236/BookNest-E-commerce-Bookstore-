@@ -21,6 +21,17 @@ services:
     ports:
       - "8761:8761"
 
+  # ---------------- API GATEWAY ----------------
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    depends_on:
+      - eureka-server
+    ports:
+      - "8080:8080"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+
   # ---------------- AUTH SERVICE ----------------
   auth-service:
     build: ./auth-service
@@ -140,6 +151,32 @@ services:
         - SPRING_DATASOURCE_USERNAME=root
         - SPRING_DATASOURCE_PASSWORD=root
         - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+
+  # ---------------- WEBSITE CONTROLLER ----------------
+  website-controller:
+      build: ./website-controller
+      container_name: website-controller
+      ports:
+        - "8090:8090"
+      depends_on:
+        - api-gateway
+        - auth-service
+        - book-service
+        - cart-service
+        - order-service
+        - wallet-service
+        - review-service
+        - notification-service
+        - wishlist-service
+      environment:
+        - SERVICES_AUTH=http://api-gateway:8080/api/auth
+        - SERVICES_BOOK=http://api-gateway:8080/api/book
+        - SERVICES_CART=http://api-gateway:8080/api/cart
+        - SERVICES_ORDER=http://api-gateway:8080/api/order
+        - SERVICES_WALLET=http://api-gateway:8080/api/wallet
+        - SERVICES_REVIEW=http://api-gateway:8080/api/review
+        - SERVICES_NOTIFICATION=http://api-gateway:8080/api/notification
+        - SERVICES_WISHLIST=http://api-gateway:8080/api/wishlist
 volumes:
   mysql_data:
 

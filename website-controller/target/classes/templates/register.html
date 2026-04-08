@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav}"></div>
+<main class="page narrow">
+    <section class="card">
+        <h1>Create account</h1>
+        <form action="/login" method="post" class="form-grid">
+            <input name="name" placeholder="Full name">
+            <input name="email" placeholder="Email">
+            <input name="password" type="password" placeholder="Password">
+            <button class="button" type="submit">Register</button>
+        </form>
+    </section>
+</main>
+</body>
+</html>

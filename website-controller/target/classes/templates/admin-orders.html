@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Orders</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav}"></div>
+<main class="page">
+    <section class="card">
+        <h1>Manage Orders</h1>
+        <div class="list">
+            <article class="list-item" th:each="order : ${orders}">
+                <p>Order <strong th:text="${order['orderId']}">1</strong></p>
+                <p>Status: <span th:text="${order['orderStatus']}">PLACED</span></p>
+                <form action="/admin/orders/status" method="post" class="inline-form">
+                    <input type="hidden" name="orderId" th:value="${order['orderId']}">
+                    <input name="status" value="DELIVERED">
+                    <button class="button secondary" type="submit">Update</button>
+                </form>
+            </article>
+        </div>
+    </section>
+</main>
+</body>
+</html>

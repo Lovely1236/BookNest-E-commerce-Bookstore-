@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Wallet</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav}"></div>
+<main class="page">
+    <section class="card">
+        <h1>Wallet</h1>
+        <p>Balance: <strong th:text="${wallet['currentBalance'] ?: 0}">0</strong></p>
+    </section>
+    <section class="card">
+        <h2>Statements</h2>
+        <div class="list">
+            <article class="list-item" th:each="statement : ${statements}">
+                <strong th:text="${statement['transactionType']}">DEPOSIT</strong>
+                <p>Amount: <span th:text="${statement['amount']}">0</span></p>
+                <p class="muted" th:text="${statement['transactionRemarks']}">Remark</p>
+            </article>
+        </div>
+    </section>
+</main>
+</body>
+</html>

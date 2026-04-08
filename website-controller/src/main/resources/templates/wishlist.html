@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Wishlist</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav}"></div>
+<main class="page">
+    <section class="card">
+        <h1>Your Wishlist</h1>
+        <p class="muted">Wishlist ID: <span th:text="${wishlist['wishlistId'] ?: 'N/A'}">N/A</span></p>
+        <div class="list">
+            <article class="list-item" th:each="item : ${wishlistBooks}">
+                <h3 th:text="${item['bookTitle']}">Book</h3>
+                <p>Price: <span th:text="${item['bookPrice']}">0</span></p>
+            </article>
+        </div>
+    </section>
+</main>
+</body>
+</html>

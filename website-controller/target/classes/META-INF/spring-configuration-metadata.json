@@ -1,0 +1,52 @@
+{
+  "groups": [
+    {
+      "name": "services",
+      "type": "org.example.web.config.ServiceUrlsProperties",
+      "sourceType": "org.example.web.config.ServiceUrlsProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "services.auth",
+      "type": "java.lang.String",
+      "sourceType": "org.example.web.config.ServiceUrlsProperties"
+    },
+    {
+      "name": "services.book",
+      "type": "java.lang.String",
+      "sourceType": "org.example.web.config.ServiceUrlsProperties"
+    },
+    {
+      "name": "services.cart",
+      "type": "java.lang.String",
+      "sourceType": "org.example.web.config.ServiceUrlsProperties"
+    },
+    {
+      "name": "services.notification",
+      "type": "java.lang.String",
+      "sourceType": "org.example.web.config.ServiceUrlsProperties"
+    },
+    {
+      "name": "services.order",
+      "type": "java.lang.String",
+      "sourceType": "org.example.web.config.ServiceUrlsProperties"
+    },
+    {
+      "name": "services.review",
+      "type": "java.lang.String",
+      "sourceType": "org.example.web.config.ServiceUrlsProperties"
+    },
+    {
+      "name": "services.wallet",
+      "type": "java.lang.String",
+      "sourceType": "org.example.web.config.ServiceUrlsProperties"
+    },
+    {
+      "name": "services.wishlist",
+      "type": "java.lang.String",
+      "sourceType": "org.example.web.config.ServiceUrlsProperties"
+    }
+  ],
+  "hints": []
+}

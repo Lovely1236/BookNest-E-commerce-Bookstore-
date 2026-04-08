@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Books</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav}"></div>
+<main class="page">
+    <div class="section-head">
+        <h1>Browse Books</h1>
+        <a th:href="@{/featured}">Featured Shelf</a>
+    </div>
+    <div class="grid">
+        <article class="card" th:each="book : ${books}">
+            <h3 th:text="${book['bookTitle'] ?: book['title'] ?: 'Untitled Book'}">Book</h3>
+            <p th:text="${book['bookAuthor'] ?: book['author'] ?: 'Unknown Author'}">Author</p>
+            <p class="muted">Price: <span th:text="${book['bookPrice'] ?: book['price'] ?: 0}">0</span></p>
+            <div class="actions">
+                <a class="button secondary"
+                   th:href="@{'/book/' + (${book['bookId'] ?: book['id']})}">View</a>
+            </div>
+        </article>
+    </div>
+</main>
+</body>
+</html>

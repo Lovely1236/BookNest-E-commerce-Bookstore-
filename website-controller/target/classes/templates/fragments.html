@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav th:fragment="nav" class="topbar">
+    <a th:href="@{/home}" class="brand">BookNest</a>
+    <div class="links">
+        <a th:href="@{/books}">Books</a>
+        <a th:href="@{/cart}">Cart</a>
+        <a th:href="@{/wishlist}">Wishlist</a>
+        <a th:href="@{/orders}">Orders</a>
+        <a th:href="@{/wallet}">Wallet</a>
+        <a th:href="@{/notifications}">Notifications</a>
+        <a th:href="@{/admin}">Admin</a>
+    </div>
+</nav>
+</body>
+</html>

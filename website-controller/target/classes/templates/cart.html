@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Cart</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav}"></div>
+<main class="page narrow">
+    <section class="card">
+        <h1>Shopping Cart</h1>
+        <pre th:text="${cart}">Cart data</pre>
+        <a class="button" th:href="@{/checkout}">Proceed to Checkout</a>
+    </section>
+</main>
+</body>
+</html>

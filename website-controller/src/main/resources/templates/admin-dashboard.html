@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav}"></div>
+<main class="page">
+    <div class="grid four">
+        <section class="card"><span>Books</span><strong th:text="${bookCount}">0</strong></section>
+        <section class="card"><span>Orders</span><strong th:text="${orderCount}">0</strong></section>
+        <section class="card"><span>Reviews</span><strong th:text="${reviewCount}">0</strong></section>
+        <section class="card"><span>Wishlists</span><strong th:text="${wishlistCount}">0</strong></section>
+    </div>
+    <div class="actions">
+        <a class="button" th:href="@{/admin/orders}">Manage Orders</a>
+        <a class="button secondary" th:href="@{/admin/reviews}">Review Moderation</a>
+        <a class="button secondary" th:href="@{/admin/inventory}">Inventory</a>
+    </div>
+</main>
+</body>
+</html>

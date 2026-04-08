@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Payment</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav}"></div>
+<main class="page two-col">
+    <section class="card">
+        <h2>Cash on Delivery</h2>
+        <form action="/payment/cod" method="post" class="form-grid">
+            <input type="number" name="bookId" value="101" placeholder="Book ID">
+            <input type="number" name="quantity" value="1" min="1">
+            <button class="button" type="submit">Place COD Order</button>
+        </form>
+    </section>
+    <section class="card">
+        <h2>Wallet Payment</h2>
+        <form action="/payment/pay" method="post" class="form-grid">
+            <input type="number" name="walletId" value="1" placeholder="Wallet ID">
+            <input type="number" step="0.01" name="amount" value="100" placeholder="Amount">
+            <input type="number" name="bookId" value="101" placeholder="Book ID">
+            <input type="number" name="quantity" value="1" min="1">
+            <button class="button secondary" type="submit">Pay with Wallet</button>
+        </form>
+    </section>
+</main>
+</body>
+</html>

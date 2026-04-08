@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Orders</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav}"></div>
+<main class="page">
+    <section class="card">
+        <h1>Orders</h1>
+        <div class="list">
+            <article class="list-item" th:each="order : ${orders}">
+                <strong>Order <span th:text="${order['orderId']}">1</span></strong>
+                <p>Status: <span th:text="${order['orderStatus']}">PLACED</span></p>
+                <p>Payment: <span th:text="${order['modeOfPayment']}">COD</span></p>
+            </article>
+        </div>
+    </section>
+</main>
+</body>
+</html>

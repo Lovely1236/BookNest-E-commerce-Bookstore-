@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Profile</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav}"></div>
+<main class="page narrow">
+    <section class="card">
+        <h1>Profile</h1>
+        <p><strong>Name:</strong> <span th:text="${profile['name']}">BookNest User</span></p>
+        <p><strong>Email:</strong> <span th:text="${profile['email']}">reader@booknest.com</span></p>
+        <p><strong>Membership:</strong> <span th:text="${profile['membership']}">Gold Reader</span></p>
+        <form action="/profile/update" method="post">
+            <button class="button" type="submit">Refresh Profile</button>
+        </form>
+    </section>
+</main>
+</body>
+</html>

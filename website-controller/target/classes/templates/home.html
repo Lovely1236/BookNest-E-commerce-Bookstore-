@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>BookNest Home</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav}"></div>
+<main class="page">
+    <section class="hero">
+        <div>
+            <p class="eyebrow">BookNest Storefront</p>
+            <h1>Discover your next favorite read.</h1>
+            <p>A lightweight MVC layer that connects your BookNest microservices into one navigable web experience.</p>
+            <div class="actions">
+                <a class="button" th:href="@{/books}">Browse Books</a>
+                <a class="button secondary" th:href="@{/admin}">Admin View</a>
+            </div>
+        </div>
+        <div class="stat-card">
+            <span>Books Available</span>
+            <strong th:text="${bookCount}">0</strong>
+        </div>
+    </section>
+
+    <section>
+        <div class="section-head">
+            <h2>Featured</h2>
+            <a th:href="@{/featured}">See all</a>
+        </div>
+        <div class="grid">
+            <article class="card" th:each="book : ${featuredBooks}">
+                <h3 th:text="${book['bookTitle'] ?: book['title'] ?: 'Untitled Book'}">Book</h3>
+                <p th:text="${book['bookAuthor'] ?: book['author'] ?: 'Unknown Author'}">Author</p>
+                <p class="muted">ID: <span th:text="${book['bookId'] ?: book['id'] ?: '-'}">1</span></p>
+            </article>
+        </div>
+    </section>
+</main>
+</body>
+</html>

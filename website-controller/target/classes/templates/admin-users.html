@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Users</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav}"></div>
+<main class="page">
+    <section class="card">
+        <h1>Manage Users</h1>
+        <div class="list">
+            <article class="list-item" th:each="user : ${users}">
+                <strong th:text="${user['name']}">User</strong>
+                <p>ID: <span th:text="${user['userId']}">1</span></p>
+                <p>Status: <span th:text="${user['status']}">ACTIVE</span></p>
+            </article>
+        </div>
+    </section>
+</main>
+</body>
+</html>

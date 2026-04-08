@@ -1,0 +1,18 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: website-controller
+  thymeleaf:
+    cache: false
+
+services:
+  auth: ${SERVICES_AUTH:http://localhost:8080/api/auth}
+  book: ${SERVICES_BOOK:http://localhost:8080/api/book}
+  cart: ${SERVICES_CART:http://localhost:8080/api/cart}
+  order: ${SERVICES_ORDER:http://localhost:8080/api/order}
+  wallet: ${SERVICES_WALLET:http://localhost:8080/api/wallet}
+  review: ${SERVICES_REVIEW:http://localhost:8080/api/review}
+  notification: ${SERVICES_NOTIFICATION:http://localhost:8080/api/notification}
+  wishlist: ${SERVICES_WISHLIST:http://localhost:8080/api/wishlist}

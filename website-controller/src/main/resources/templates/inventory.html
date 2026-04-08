@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Inventory</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav}"></div>
+<main class="page">
+    <section class="card">
+        <h1>Inventory</h1>
+        <div class="list">
+            <article class="list-item" th:each="book : ${books}">
+                <h3 th:text="${book['bookTitle'] ?: book['title'] ?: 'Untitled Book'}">Book</h3>
+                <p th:text="${book['bookAuthor'] ?: book['author'] ?: 'Unknown Author'}">Author</p>
+            </article>
+        </div>
+    </section>
+</main>
+</body>
+</html>

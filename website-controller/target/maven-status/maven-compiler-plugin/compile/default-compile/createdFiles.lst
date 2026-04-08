@@ -1,0 +1,11 @@
+org\example\web\config\AppConfig.class
+org\example\web\service\BackendGateway$2.class
+META-INF\spring-configuration-metadata.json
+org\example\web\controller\UserController.class
+org\example\web\controller\BookController.class
+org\example\web\controller\AdminController.class
+org\example\web\WebsiteControllerApplication.class
+org\example\web\service\BackendGateway$1.class
+org\example\web\service\BackendGateway.class
+org\example\web\config\ServiceUrlsProperties.class
+org\example\web\service\BackendGateway$3.class
