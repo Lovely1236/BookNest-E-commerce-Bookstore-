@@ -1,4 +1,6 @@
 C:\Users\milyp\OneDrive - gla.ac.in\BookNest\wallet-service\src\main\java\org\example\walletservice\WalletServiceApplication.java
+C:\Users\milyp\OneDrive - gla.ac.in\BookNest\wallet-service\src\main\java\org\example\walletservice\config\CorsConfig.java
+C:\Users\milyp\OneDrive - gla.ac.in\BookNest\wallet-service\src\main\java\org\example\walletservice\config\OpenApiConfig.java
 C:\Users\milyp\OneDrive - gla.ac.in\BookNest\wallet-service\src\main\java\org\example\walletservice\entity\Statement.java
 C:\Users\milyp\OneDrive - gla.ac.in\BookNest\wallet-service\src\main\java\org\example\walletservice\repository\WalletRepository.java
 C:\Users\milyp\OneDrive - gla.ac.in\BookNest\wallet-service\src\main\java\org\example\walletservice\service\impl\WalletServiceImpl.java

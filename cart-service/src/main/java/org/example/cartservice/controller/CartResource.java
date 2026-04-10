@@ -17,7 +17,7 @@ public class CartResource {
 
     private final CartService cartService;
 
-    private BookClient bookClient;
+    private final BookClient bookClient;
 
 
     // GET CART

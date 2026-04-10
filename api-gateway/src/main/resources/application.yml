@@ -6,6 +6,12 @@ spring:
     name: api-gateway
   cloud:
     gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
       routes:
         - id: auth-service
           uri: lb://AUTH-SERVICE
@@ -13,6 +19,10 @@ spring:
             - Path=/api/auth/**
           filters:
             - StripPrefix=2
+        - id: auth-service-direct
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/auth/**
         - id: book-service
           uri: lb://BOOK-SERVICE
           predicates:
