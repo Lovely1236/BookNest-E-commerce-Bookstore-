@@ -6,16 +6,35 @@
     <link rel="stylesheet" th:href="@{/css/site.css}">
 </head>
 <body>
-<div th:replace="~{fragments :: nav}"></div>
+<div th:replace="~{fragments :: nav('wishlist')}"></div>
+<div th:replace="~{fragments :: flash}"></div>
 <main class="page">
     <section class="card">
-        <h1>Your Wishlist</h1>
+        <p class="eyebrow">Wishlist</p>
+        <h1>Your Saved Books</h1>
         <p class="muted">Wishlist ID: <span th:text="${wishlist['wishlistId'] ?: 'N/A'}">N/A</span></p>
         <div class="list">
             <article class="list-item" th:each="item : ${wishlistBooks}">
-                <h3 th:text="${item['bookTitle']}">Book</h3>
-                <p>Price: <span th:text="${item['bookPrice']}">0</span></p>
+                <div class="list-item-header">
+                    <h3 th:text="${item['bookTitle']}">Book</h3>
+                    <p class="price">Rs. <span th:text="${item['bookPrice']}">0</span></p>
+                </div>
+                <div class="actions">
+                    <a class="button secondary" th:href="@{'/book/' + ${item['bookId']}}">View Book</a>
+                    <div th:if="${signedIn}">
+                        <form action="/wishlist/remove" method="post">
+                            <input type="hidden" name="itemId" th:value="${item['itemId']}">
+                            <button class="button ghost" type="submit">Remove</button>
+                        </form>
+                    </div>
+                    <div th:unless="${signedIn}">
+                        <span class="muted">Sign in to remove items</span>
+                    </div>
+                </div>
             </article>
+        </div>
+        <div class="empty-state" th:if="${#lists.isEmpty(wishlistBooks)}">
+            Save books from the detail page and they will appear here.
         </div>
     </section>
 </main>

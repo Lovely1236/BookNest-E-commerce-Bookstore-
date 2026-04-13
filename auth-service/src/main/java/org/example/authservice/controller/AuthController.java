@@ -9,6 +9,7 @@ import org.example.authservice.repository.UserRepository;
 import org.example.authservice.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +27,9 @@ public class AuthController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Value("${website.url:http://localhost:8090}")
+    private String websiteUrl;
 
     // REGISTER
     @PostMapping("/register")
@@ -70,6 +74,20 @@ public class AuthController {
         return ResponseEntity.ok(authService.getUserByEmail(email));
     }
 
+    @GetMapping("/users")
+    public ResponseEntity<?> users() {
+        return ResponseEntity.ok(userRepository.findAll());
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> me(@RequestHeader("Authorization") String token) {
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+        String email = jwtUtil.extractEmail(token);
+        return ResponseEntity.ok(authService.getUserByEmail(email));
+    }
+
     // CHANGE PASSWORD
     @PutMapping("/change-password")
     public ResponseEntity<?> changePassword(@RequestParam Long userId,
@@ -94,9 +112,8 @@ public class AuthController {
 
         String token = jwtUtil.generateToken(email);
 
-        return ResponseEntity.ok(Map.of(
-                "token", token,
-                "message", "OAuth login successful"
-        ));
+        // Redirect to website callback with token so UI can store session
+        String redirect = websiteUrl + "/auth/callback?token=" + token;
+        return ResponseEntity.status(302).header("Location", redirect).build();
     }
 }

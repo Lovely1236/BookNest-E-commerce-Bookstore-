@@ -6,15 +6,22 @@
     <link rel="stylesheet" th:href="@{/css/site.css}">
 </head>
 <body>
-<div th:replace="~{fragments :: nav}"></div>
+<div th:replace="~{fragments :: nav('books')}"></div>
+<div th:replace="~{fragments :: flash}"></div>
 <main class="page">
     <div class="section-head">
-        <h1>Featured Shelf</h1>
+        <div>
+            <p class="eyebrow">Featured</p>
+            <h1>Featured Shelf</h1>
+        </div>
     </div>
     <div class="grid">
-        <article class="card" th:each="book : ${books}">
-            <h3 th:text="${book['bookTitle'] ?: book['title'] ?: 'Untitled Book'}">Book</h3>
-            <p th:text="${book['bookAuthor'] ?: book['author'] ?: 'Unknown Author'}">Author</p>
+        <article class="card book-card" th:each="book : ${books}">
+            <span class="book-badge" th:text="${book['genre'] ?: 'Featured'}">Featured</span>
+            <h3 th:text="${book['title'] ?: 'Untitled Book'}">Book</h3>
+            <p class="meta" th:text="${book['author'] ?: 'Unknown Author'}">Author</p>
+            <p class="price">Rs. <span th:text="${book['price'] ?: 0}">0</span></p>
+            <a class="button secondary" th:href="@{'/book/' + ${book['bookId']}}">Open Details</a>
         </article>
     </div>
 </main>

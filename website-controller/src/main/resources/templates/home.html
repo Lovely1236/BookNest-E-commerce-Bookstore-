@@ -6,36 +6,94 @@
     <link rel="stylesheet" th:href="@{/css/site.css}">
 </head>
 <body>
-<div th:replace="~{fragments :: nav}"></div>
+<div th:replace="~{fragments :: nav('home')}"></div>
+<div th:replace="~{fragments :: flash}"></div>
 <main class="page">
     <section class="hero">
-        <div>
+        <div class="card hero-card">
             <p class="eyebrow">BookNest Storefront</p>
-            <h1>Discover your next favorite read.</h1>
-            <p>A lightweight MVC layer that connects your BookNest microservices into one navigable web experience.</p>
+            <h1>Discover, save, and order books from one connected storefront.</h1>
+            <p>Browse the catalog, manage your cart and wishlist, review books, and watch the admin and customer flows update through the same microservice APIs.</p>
             <div class="actions">
                 <a class="button" th:href="@{/books}">Browse Books</a>
-                <a class="button secondary" th:href="@{/admin}">Admin View</a>
+                <a class="button secondary" th:href="@{/register}" th:unless="${signedIn}">Create Account</a>
+                <a class="button secondary" th:href="@{/admin}">Open Admin</a>
             </div>
         </div>
         <div class="stat-card">
-            <span>Books Available</span>
-            <strong th:text="${bookCount}">0</strong>
+            <p class="eyebrow">Catalog Snapshot</p>
+            <div class="metric">
+                <span>Books Available</span>
+                <strong th:text="${bookCount}">0</strong>
+            </div>
+            <div class="metric">
+                <span>Genres Covered</span>
+                <strong th:text="${genreCount}">0</strong>
+            </div>
         </div>
     </section>
 
     <section>
         <div class="section-head">
-            <h2>Featured</h2>
-            <a th:href="@{/featured}">See all</a>
+            <div>
+                <p class="eyebrow">Featured Shelf</p>
+                <h2>Readers are loving these titles</h2>
+            </div>
+            <a th:href="@{/featured}">See all featured</a>
         </div>
         <div class="grid">
-            <article class="card" th:each="book : ${featuredBooks}">
-                <h3 th:text="${book['bookTitle'] ?: book['title'] ?: 'Untitled Book'}">Book</h3>
-                <p th:text="${book['bookAuthor'] ?: book['author'] ?: 'Unknown Author'}">Author</p>
-                <p class="muted">ID: <span th:text="${book['bookId'] ?: book['id'] ?: '-'}">1</span></p>
+            <article class="card book-card" th:each="book : ${featuredBooks}">
+                <span class="book-badge" th:text="${book['genre'] ?: 'Featured'}">Featured</span>
+                <div>
+                    <h3 th:text="${book['title'] ?: 'Untitled Book'}">Book</h3>
+                    <p class="meta" th:text="${book['author'] ?: 'Unknown Author'}">Author</p>
+                </div>
+                <p class="price">Rs. <span th:text="${book['price'] ?: 0}">0</span></p>
+                <div class="actions">
+                    <a class="button secondary" th:href="@{'/book/' + ${book['bookId']}}">View</a>
+                </div>
             </article>
         </div>
+    </section>
+
+    <section>
+        <div class="section-head">
+            <div>
+                <p class="eyebrow">Latest Catalog</p>
+                <h2>Recently available books</h2>
+            </div>
+            <a th:href="@{/books}">Browse everything</a>
+        </div>
+        <div class="grid three">
+            <article class="card book-card" th:each="book : ${latestBooks}">
+                <div>
+                    <h3 th:text="${book['title'] ?: 'Untitled Book'}">Book</h3>
+                    <p class="meta" th:text="${book['author'] ?: 'Unknown Author'}">Author</p>
+                    <p class="meta">Stock: <span th:text="${book['stock'] ?: 0}">0</span></p>
+                </div>
+                <div class="actions">
+                    <a class="button secondary" th:href="@{'/book/' + ${book['bookId']}}">Open details</a>
+                </div>
+            </article>
+        </div>
+    </section>
+    
+    <section class="grid three">
+        <article class="card">
+            <p class="eyebrow">Customer Flow</p>
+            <h3>Cart, wishlist, wallet, orders</h3>
+            <p class="meta">All customer pages now pull live data from the microservices instead of placeholder blocks.</p>
+        </article>
+        <article class="card">
+            <p class="eyebrow">Admin Flow</p>
+            <h3>Catalog and inventory controls</h3>
+            <p class="meta">Add books, update stock, review orders, and inspect service-backed dashboard totals.</p>
+        </article>
+        <article class="card">
+            <p class="eyebrow">Auth Flow</p>
+            <h3>Register, sign in, and manage your profile</h3>
+            <p class="meta">The storefront now persists a signed-in user session and uses it across the other pages.</p>
+        </article>
     </section>
 </main>
 </body>

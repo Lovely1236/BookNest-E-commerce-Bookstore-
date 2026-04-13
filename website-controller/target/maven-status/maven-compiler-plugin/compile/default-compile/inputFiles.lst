@@ -1,7 +1,13 @@
+C:\Users\milyp\OneDrive - gla.ac.in\BookNest\website-controller\src\main\java\org\example\web\config\StorefrontProperties.java
+C:\Users\milyp\OneDrive - gla.ac.in\BookNest\website-controller\src\main\java\org\example\web\service\StorefrontUser.java
+C:\Users\milyp\OneDrive - gla.ac.in\BookNest\website-controller\src\main\java\org\example\web\service\CurrentUserService.java
+C:\Users\milyp\OneDrive - gla.ac.in\BookNest\website-controller\src\main\java\org\example\web\controller\AdminController.java
 C:\Users\milyp\OneDrive - gla.ac.in\BookNest\website-controller\src\main\java\org\example\web\controller\UserController.java
+C:\Users\milyp\OneDrive - gla.ac.in\BookNest\website-controller\src\main\java\org\example\web\controller\GlobalModelAttributes.java
 C:\Users\milyp\OneDrive - gla.ac.in\BookNest\website-controller\src\main\java\org\example\web\WebsiteControllerApplication.java
 C:\Users\milyp\OneDrive - gla.ac.in\BookNest\website-controller\src\main\java\org\example\web\config\AppConfig.java
 C:\Users\milyp\OneDrive - gla.ac.in\BookNest\website-controller\src\main\java\org\example\web\config\ServiceUrlsProperties.java
 C:\Users\milyp\OneDrive - gla.ac.in\BookNest\website-controller\src\main\java\org\example\web\service\BackendGateway.java
-C:\Users\milyp\OneDrive - gla.ac.in\BookNest\website-controller\src\main\java\org\example\web\controller\AdminController.java
+C:\Users\milyp\OneDrive - gla.ac.in\BookNest\website-controller\src\main\java\org\example\web\service\BackendGatewayException.java
 C:\Users\milyp\OneDrive - gla.ac.in\BookNest\website-controller\src\main\java\org\example\web\controller\BookController.java
+C:\Users\milyp\OneDrive - gla.ac.in\BookNest\website-controller\src\main\java\org\example\web\config\CorsConfig.java

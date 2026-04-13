@@ -6,20 +6,44 @@
     <link rel="stylesheet" th:href="@{/css/site.css}">
 </head>
 <body>
-<div th:replace="~{fragments :: nav}"></div>
+<div th:replace="~{fragments :: nav('wallet')}"></div>
+<div th:replace="~{fragments :: flash}"></div>
 <main class="page">
-    <section class="card">
-        <h1>Wallet</h1>
-        <p>Balance: <strong th:text="${wallet['currentBalance'] ?: 0}">0</strong></p>
+    <section class="dashboard-layout">
+        <article class="card">
+            <p class="eyebrow">Wallet</p>
+            <h1>Digital Balance</h1>
+            <p class="price">Rs. <span th:text="${wallet['currentBalance'] ?: 0}">0</span></p>
+            <p class="meta">Wallet ID: <span th:text="${wallet['walletId'] ?: 'N/A'}">1</span></p>
+        </article>
+
+        <article class="card">
+            <p class="eyebrow">Top Up</p>
+            <h2>Add money</h2>
+            <form action="/wallet/add" method="post" class="form-grid">
+                <div>
+                    <label for="amount">Amount</label>
+                    <input id="amount" type="number" step="0.01" min="1" name="amount" value="500">
+                </div>
+                <button class="button" type="submit">Add Money</button>
+            </form>
+        </article>
     </section>
+
     <section class="card">
         <h2>Statements</h2>
         <div class="list">
             <article class="list-item" th:each="statement : ${statements}">
-                <strong th:text="${statement['transactionType']}">DEPOSIT</strong>
-                <p>Amount: <span th:text="${statement['amount']}">0</span></p>
+                <div class="list-item-header">
+                    <strong th:text="${statement['transactionType']}">DEPOSIT</strong>
+                    <span>Rs. <span th:text="${statement['amount']}">0</span></span>
+                </div>
                 <p class="muted" th:text="${statement['transactionRemarks']}">Remark</p>
+                <p class="meta" th:text="${statement['dateTime'] ?: 'Pending timestamp'}">Timestamp</p>
             </article>
+        </div>
+        <div class="empty-state" th:if="${#lists.isEmpty(statements)}">
+            No wallet statements yet. Add money or place an online order to populate this ledger.
         </div>
     </section>
 </main>

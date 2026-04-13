@@ -6,15 +6,21 @@
     <link rel="stylesheet" th:href="@{/css/site.css}">
 </head>
 <body>
-<div th:replace="~{fragments :: nav}"></div>
+<div th:replace="~{fragments :: nav('admin')}"></div>
+<div th:replace="~{fragments :: flash}"></div>
 <main class="page">
     <section class="card">
+        <p class="eyebrow">Users</p>
         <h1>Manage Users</h1>
+        <div class="empty-state" th:if="${authRequired}">
+            Sign in first to load real users from the auth service.
+        </div>
         <div class="list">
             <article class="list-item" th:each="user : ${users}">
-                <strong th:text="${user['name']}">User</strong>
+                <strong th:text="${user['fullName'] ?: user['email']}">User</strong>
                 <p>ID: <span th:text="${user['userId']}">1</span></p>
-                <p>Status: <span th:text="${user['status']}">ACTIVE</span></p>
+                <p>Email: <span th:text="${user['email']}">user@example.com</span></p>
+                <p>Role: <span th:text="${user['role'] ?: 'ROLE_CUSTOMER'}">ROLE_CUSTOMER</span></p>
             </article>
         </div>
     </section>

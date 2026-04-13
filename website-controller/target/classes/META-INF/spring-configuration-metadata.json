@@ -4,6 +4,11 @@
       "name": "services",
       "type": "org.example.web.config.ServiceUrlsProperties",
       "sourceType": "org.example.web.config.ServiceUrlsProperties"
+    },
+    {
+      "name": "storefront",
+      "type": "org.example.web.config.StorefrontProperties",
+      "sourceType": "org.example.web.config.StorefrontProperties"
     }
   ],
   "properties": [
@@ -46,6 +51,36 @@
       "name": "services.wishlist",
       "type": "java.lang.String",
       "sourceType": "org.example.web.config.ServiceUrlsProperties"
+    },
+    {
+      "name": "storefront.email",
+      "type": "java.lang.String",
+      "sourceType": "org.example.web.config.StorefrontProperties"
+    },
+    {
+      "name": "storefront.full-name",
+      "type": "java.lang.String",
+      "sourceType": "org.example.web.config.StorefrontProperties"
+    },
+    {
+      "name": "storefront.membership",
+      "type": "java.lang.String",
+      "sourceType": "org.example.web.config.StorefrontProperties"
+    },
+    {
+      "name": "storefront.mobile",
+      "type": "java.lang.Long",
+      "sourceType": "org.example.web.config.StorefrontProperties"
+    },
+    {
+      "name": "storefront.user-id",
+      "type": "java.lang.Long",
+      "sourceType": "org.example.web.config.StorefrontProperties"
+    },
+    {
+      "name": "storefront.wallet-id",
+      "type": "java.lang.Long",
+      "sourceType": "org.example.web.config.StorefrontProperties"
     }
   ],
   "hints": []

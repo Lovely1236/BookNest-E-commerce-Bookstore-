@@ -131,11 +131,16 @@ services:
       depends_on:
         - eureka-server
         - mysql
+        - rabbitmq
       environment:
         - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/notification_db
         - SPRING_DATASOURCE_USERNAME=root
         - SPRING_DATASOURCE_PASSWORD=root
         - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+        - RABBITMQ_HOST=rabbitmq
+        - RABBITMQ_PORT=5672
+        - RABBITMQ_USERNAME=guest
+        - RABBITMQ_PASSWORD=guest
 
   # ---------------- WISHLIST SERVICE ----------------
   wishlist-service:
@@ -177,6 +182,17 @@ services:
         - SERVICES_REVIEW=http://api-gateway:8080/api/review
         - SERVICES_NOTIFICATION=http://api-gateway:8080/api/notification
         - SERVICES_WISHLIST=http://api-gateway:8080/api/wishlist
+  
+  # ---------------- RABBITMQ ----------------
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: booknest-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
 volumes:
   mysql_data:
 

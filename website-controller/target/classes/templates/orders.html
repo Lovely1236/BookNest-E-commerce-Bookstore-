@@ -6,16 +6,32 @@
     <link rel="stylesheet" th:href="@{/css/site.css}">
 </head>
 <body>
-<div th:replace="~{fragments :: nav}"></div>
+<div th:replace="~{fragments :: nav('orders')}"></div>
+<div th:replace="~{fragments :: flash}"></div>
 <main class="page">
     <section class="card">
-        <h1>Orders</h1>
+        <div class="section-head">
+            <div>
+                <p class="eyebrow">Orders</p>
+                <h1>Your Order History</h1>
+            </div>
+        </div>
         <div class="list">
             <article class="list-item" th:each="order : ${orders}">
-                <strong>Order <span th:text="${order['orderId']}">1</span></strong>
-                <p>Status: <span th:text="${order['orderStatus']}">PLACED</span></p>
-                <p>Payment: <span th:text="${order['modeOfPayment']}">COD</span></p>
+                <div class="list-item-header">
+                    <strong>Order <span th:text="${order['orderId']}">1</span></strong>
+                    <span class="status-badge"
+                          th:classappend="${order['orderStatus'] == 'PAID' || order['orderStatus'] == 'DELIVERED'} ? ' paid' : ' pending'"
+                          th:text="${order['orderStatus']}">PLACED</span>
+                </div>
+                <p class="meta">Book: <span th:text="${order['book'] != null ? order['book']['productName'] : 'N/A'}">Selected Book</span></p>
+                <p class="meta">Quantity: <span th:text="${order['quantity']}">1</span></p>
+                <p class="meta">Payment: <span th:text="${order['modeOfPayment']}">COD</span></p>
+                <p class="meta">Amount paid: Rs. <span th:text="${order['amountPaid']}">0</span></p>
             </article>
+        </div>
+        <div class="empty-state" th:if="${#lists.isEmpty(orders)}">
+            You have not placed any orders yet.
         </div>
     </section>
 </main>

@@ -6,13 +6,18 @@
     <link rel="stylesheet" th:href="@{/css/site.css}">
 </head>
 <body>
-<div th:replace="~{fragments :: nav}"></div>
+<div th:replace="~{fragments :: nav('admin')}"></div>
+<div th:replace="~{fragments :: flash}"></div>
 <main class="page">
     <section class="card">
+        <p class="eyebrow">Reviews</p>
         <h1>Moderate Reviews</h1>
         <div class="list">
             <article class="list-item" th:each="review : ${reviews}">
-                <p>Book ID: <span th:text="${review['bookId']}">1</span></p>
+                <div class="list-item-header">
+                    <p>Book ID: <span th:text="${review['bookId']}">1</span></p>
+                    <span class="status-badge" th:text="${review['rating'] + ' / 5'}">5 / 5</span>
+                </div>
                 <p th:text="${review['comment']}">Comment</p>
                 <form action="/admin/review/moderate" method="post">
                     <input type="hidden" name="reviewId" th:value="${review['reviewId']}">

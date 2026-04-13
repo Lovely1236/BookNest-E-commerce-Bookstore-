@@ -6,6 +6,8 @@ import org.example.orderservice.entity.Order;
 import org.example.orderservice.repository.AddressRepository;
 import org.example.orderservice.repository.OrderRepository;
 import org.example.orderservice.service.OrderService;
+import org.example.orderservice.dto.NotificationMessage;
+import org.example.orderservice.publisher.NotificationPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -19,6 +21,7 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final AddressRepository addressRepository;
+    private final NotificationPublisher notificationPublisher;
 
     @Override
     public List<Order> getAllOrders() {
@@ -37,7 +40,21 @@ public class OrderServiceImpl implements OrderService {
             order.setModeOfPayment("COD");
         }
         order.setOrderStatus("PLACED");
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+
+        // publish notification
+        try {
+            NotificationMessage msg = new NotificationMessage();
+            msg.setUserId(saved.getUserId());
+            msg.setType("ORDER_PLACED");
+            msg.setMessage("Your order " + saved.getOrderId() + " has been placed.");
+            notificationPublisher.publish(msg);
+        } catch (Exception e) {
+            // logging omitted — don't fail order on notification publish
+            System.err.println("Failed to publish notification: " + e.getMessage());
+        }
+
+        return saved;
     }
 
     @Override
@@ -45,7 +62,17 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderDate(LocalDate.now());
         order.setModeOfPayment("ONLINE");
         order.setOrderStatus("PAID");
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+        try {
+            NotificationMessage msg = new NotificationMessage();
+            msg.setUserId(saved.getUserId());
+            msg.setType("ORDER_PAID");
+            msg.setMessage("Your payment for order " + saved.getOrderId() + " was successful.");
+            notificationPublisher.publish(msg);
+        } catch (Exception e) {
+            System.err.println("Failed to publish notification: " + e.getMessage());
+        }
+        return saved;
     }
 
     @Override

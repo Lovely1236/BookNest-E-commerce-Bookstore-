@@ -6,13 +6,37 @@
     <link rel="stylesheet" th:href="@{/css/site.css}">
 </head>
 <body>
-<div th:replace="~{fragments :: nav}"></div>
-<main class="page narrow">
+<div th:replace="~{fragments :: nav('cart')}"></div>
+<div th:replace="~{fragments :: flash}"></div>
+<main class="page two-col">
     <section class="card">
-        <h1>Checkout</h1>
-        <p>Ready to place your order.</p>
-        <pre th:text="${cart}">Cart summary</pre>
-        <a class="button" th:href="@{/payment}">Choose Payment Mode</a>
+        <p class="eyebrow">Checkout</p>
+        <h1>Review your order</h1>
+        <div class="list" th:if="${!#lists.isEmpty(cartItems)}">
+            <article class="list-item" th:each="item : ${cartItems}">
+                <div class="list-item-header">
+                    <strong th:text="${item['bookTitle']}">Book</strong>
+                    <span class="meta">Qty: <span th:text="${item['quantity']}">1</span></span>
+                </div>
+                <p class="price">Rs. <span th:text="${item['price']}">0</span></p>
+            </article>
+        </div>
+        <div class="empty-state" th:if="${#lists.isEmpty(cartItems)}">
+            There is nothing to check out right now.
+        </div>
+    </section>
+
+    <section class="card summary-box">
+        <p class="eyebrow">Payment</p>
+        <div class="summary-row">
+            <span>Total payable</span>
+            <strong>Rs. <span th:text="${cartTotal}">0</span></strong>
+        </div>
+        <p class="meta">Choose cash on delivery or continue to wallet payment.</p>
+        <div class="actions">
+            <a class="button" th:href="@{/payment}" th:if="${!#lists.isEmpty(cartItems)}">Choose Payment Mode</a>
+            <a class="button ghost" th:href="@{/cart}">Back to Cart</a>
+        </div>
     </section>
 </main>
 </body>

@@ -6,14 +6,35 @@
     <link rel="stylesheet" th:href="@{/css/site.css}">
 </head>
 <body>
-<div th:replace="~{fragments :: nav}"></div>
+<div th:replace="~{fragments :: nav('admin')}"></div>
+<div th:replace="~{fragments :: flash}"></div>
 <main class="page">
     <section class="card">
-        <h1>Inventory</h1>
+        <div class="section-head">
+            <div>
+                <p class="eyebrow">Inventory</p>
+                <h1>Stock Management</h1>
+            </div>
+            <a class="button" th:href="@{/admin/addBook}">Add New Book</a>
+        </div>
         <div class="list">
             <article class="list-item" th:each="book : ${books}">
-                <h3 th:text="${book['bookTitle'] ?: book['title'] ?: 'Untitled Book'}">Book</h3>
-                <p th:text="${book['bookAuthor'] ?: book['author'] ?: 'Unknown Author'}">Author</p>
+                <div class="list-item-header">
+                    <div>
+                        <h3 th:text="${book['title'] ?: 'Untitled Book'}">Book</h3>
+                        <p class="meta" th:text="${book['author'] ?: 'Unknown Author'}">Author</p>
+                    </div>
+                    <span class="price">Rs. <span th:text="${book['price'] ?: 0}">0</span></span>
+                </div>
+                <form action="/admin/inventory/update" method="post" class="inline-form">
+                    <input type="hidden" name="id" th:value="${book['bookId']}">
+                    <input type="number" min="0" name="stock" th:value="${book['stock'] ?: 0}">
+                    <button class="button secondary" type="submit">Update Stock</button>
+                </form>
+                <form action="/admin/deleteBook" method="post">
+                    <input type="hidden" name="id" th:value="${book['bookId']}">
+                    <button class="button ghost" type="submit">Delete Book</button>
+                </form>
             </article>
         </div>
     </section>
