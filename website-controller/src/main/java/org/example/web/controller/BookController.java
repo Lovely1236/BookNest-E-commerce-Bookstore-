@@ -6,8 +6,7 @@ import org.example.web.service.BackendGateway;
 import org.example.web.service.BackendGatewayException;
 import org.example.web.service.CurrentUserService;
 import org.example.web.service.StorefrontUser;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,39 +21,38 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@Controller
+@RestController
 @RequiredArgsConstructor
 public class BookController {
 
     private final BackendGateway backendGateway;
     private final CurrentUserService currentUserService;
 
-    @GetMapping("/home")
-    public String home(Model model) {
+        @GetMapping("/home")
+        public Map<String, Object> home() {
         List<Map<String, Object>> books = backendGateway.getList(backendGateway.serviceUrls().book() + "/books");
-        List<Map<String, Object>> featured =
-                backendGateway.getList(backendGateway.serviceUrls().book() + "/books/featured");
+        List<Map<String, Object>> featured = backendGateway.getList(backendGateway.serviceUrls().book() + "/books/featured");
         if (featured.isEmpty()) {
             featured = books.stream()
-                    .sorted(Comparator.comparingDouble(book -> -toDouble(book.get("rating"))))
-                    .limit(4)
-                    .toList();
+                .sorted(Comparator.comparingDouble(book -> -toDouble(book.get("rating"))))
+                .limit(4)
+                .toList();
         }
-        model.addAttribute("featuredBooks", featured.stream().limit(4).toList());
-        model.addAttribute("latestBooks", books.stream().limit(6).toList());
-        model.addAttribute("bookCount", books.size());
-        model.addAttribute("genreCount", books.stream()
+        return Map.of(
+            "featuredBooks", featured.stream().limit(4).toList(),
+            "latestBooks", books.stream().limit(6).toList(),
+            "bookCount", books.size(),
+            "genreCount", books.stream()
                 .map(book -> String.valueOf(book.getOrDefault("genre", "")))
                 .filter(genre -> !genre.isBlank())
                 .distinct()
-                .count());
-        return "home";
-    }
+                .count()
+        );
+        }
 
     @GetMapping("/books")
-    public String searchBooks(@RequestParam(required = false) String keyword,
-                              @RequestParam(required = false) String genre,
-                              Model model) {
+        public Map<String, Object> searchBooks(@RequestParam(required = false) String keyword,
+                           @RequestParam(required = false) String genre) {
         List<Map<String, Object>> allBooks =
                 backendGateway.getList(backendGateway.serviceUrls().book() + "/books");
         List<Map<String, Object>> books = allBooks;
@@ -68,184 +66,139 @@ public class BookController {
                             + UriUtils.encodePathSegment(genre, StandardCharsets.UTF_8));
         }
 
-        model.addAttribute("books", books);
-        model.addAttribute("keyword", keyword == null ? "" : keyword);
-        model.addAttribute("selectedGenre", genre == null ? "" : genre);
-        model.addAttribute("genres", allBooks.stream()
+        return Map.of(
+            "books", books,
+            "keyword", keyword == null ? "" : keyword,
+            "selectedGenre", genre == null ? "" : genre,
+            "genres", allBooks.stream()
                 .map(book -> String.valueOf(book.getOrDefault("genre", "")))
                 .filter(value -> !value.isBlank())
                 .distinct()
                 .sorted()
-                .toList());
-        return "books";
+                .toList()
+        );
     }
 
     @GetMapping("/book/{id}")
-    public String viewBook(@PathVariable Long id, Model model) {
+        public Map<String, Object> viewBook(@PathVariable Long id) {
         Map<String, Object> book = backendGateway.getObject(backendGateway.serviceUrls().book() + "/books/" + id);
-        model.addAttribute("book", book);
-        model.addAttribute("reviews",
-                backendGateway.getList(backendGateway.serviceUrls().review() + "/reviews/book/" + id));
-        model.addAttribute("averageRating",
-                backendGateway.getDouble(backendGateway.serviceUrls().review() + "/reviews/avg/" + id, 0.0));
-        model.addAttribute("recommendedBooks",
-                backendGateway.getList(backendGateway.serviceUrls().book() + "/books").stream()
-                        .filter(candidate -> !String.valueOf(candidate.get("bookId")).equals(String.valueOf(id)))
-                        .limit(3)
-                        .toList());
-        return "book-detail";
-    }
+        List<Map<String, Object>> reviews = backendGateway.getList(backendGateway.serviceUrls().review() + "/reviews/book/" + id);
+        double averageRating = backendGateway.getDouble(backendGateway.serviceUrls().review() + "/reviews/avg/" + id, 0.0);
+        List<Map<String, Object>> recommendedBooks = backendGateway.getList(backendGateway.serviceUrls().book() + "/books").stream()
+            .filter(candidate -> !String.valueOf(candidate.get("bookId")).equals(String.valueOf(id)))
+            .limit(3)
+            .toList();
+        return Map.of("book", book, "reviews", reviews, "averageRating", averageRating, "recommendedBooks", recommendedBooks);
+        }
 
     @GetMapping("/featured")
-    public String viewFeatured(Model model) {
-        List<Map<String, Object>> books =
-                backendGateway.getList(backendGateway.serviceUrls().book() + "/books/featured");
+    public Map<String, Object> viewFeatured() {
+        List<Map<String, Object>> books = backendGateway.getList(backendGateway.serviceUrls().book() + "/books/featured");
         if (books.isEmpty()) {
             books = backendGateway.getList(backendGateway.serviceUrls().book() + "/books");
         }
-        model.addAttribute("books", books.stream().limit(6).toList());
-        return "featured";
+        return Map.of("books", books.stream().limit(6).toList());
     }
 
     @GetMapping("/cart")
-    public String shoppingCart(Model model, HttpSession session) {
+    public Map<String, Object> shoppingCart(HttpSession session) {
         StorefrontUser currentUser = currentUserService.currentUser(session);
-        Map<String, Object> cart =
-                backendGateway.getObject(backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId());
-        model.addAttribute("cart", cart);
-        model.addAttribute("cartItems", cart.getOrDefault("items", List.of()));
-        model.addAttribute("cartTotal", backendGateway.getDouble(
-                backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId() + "/total", 0.0));
-        return "cart";
+        Map<String, Object> cart = backendGateway.getObject(backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId());
+        return Map.of("cart", cart, "cartItems", cart.getOrDefault("items", List.of()), "cartTotal", backendGateway.getDouble(backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId() + "/total", 0.0));
     }
 
     @PostMapping("/cart/add")
-    public String addToCart(@RequestParam Long bookId,
-                            @RequestParam(defaultValue = "1") int quantity,
-                            HttpSession session,
-                            RedirectAttributes redirectAttributes) {
+    public Map<String, Object> addToCart(@RequestParam Long bookId,
+                                         @RequestParam(defaultValue = "1") int quantity,
+                                         HttpSession session) {
         StorefrontUser currentUser = currentUserService.currentUser(session);
         if (!currentUser.authenticated()) {
-            redirectAttributes.addFlashAttribute("flashMessage", "Please sign in to add items to your cart.");
-            redirectAttributes.addFlashAttribute("flashType", "error");
-            return "redirect:/register";
+            return Map.of("error", "authentication_required", "message", "Please sign in to add items to your cart.");
         }
         Map<String, Object> request = new HashMap<>();
         request.put("bookId", bookId);
         request.put("quantity", quantity);
         try {
-            backendGateway.postStrict(
-                    backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId() + "/add",
-                    request);
-            flash(redirectAttributes, "Book added to cart.", "success");
-            return "redirect:/cart";
+            backendGateway.postStrict(backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId() + "/add", request);
+            return Map.of("status", "success", "message", "Book added to cart.");
         } catch (BackendGatewayException ex) {
-            flash(redirectAttributes, ex.getMessage(), "error");
-            return "redirect:/book/" + bookId;
+            return Map.of("status", "error", "message", ex.getMessage());
         }
     }
 
     @PostMapping("/cart/remove")
-    public String removeFromCart(@RequestParam Long itemId,
-                                 HttpSession session,
-                                 RedirectAttributes redirectAttributes) {
+    public Map<String, Object> removeFromCart(@RequestParam Long itemId, HttpSession session) {
         StorefrontUser currentUser = currentUserService.currentUser(session);
         if (!currentUser.authenticated()) {
-            redirectAttributes.addFlashAttribute("flashMessage", "Please sign in to modify your cart.");
-            redirectAttributes.addFlashAttribute("flashType", "error");
-            return "redirect:/register";
+            return Map.of("error", "authentication_required", "message", "Please sign in to modify your cart.");
         }
         try {
-            backendGateway.deleteStrict(
-                    backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId()
-                            + "/remove/" + itemId);
-            flash(redirectAttributes, "Item removed from cart.", "success");
+            backendGateway.deleteStrict(backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId() + "/remove/" + itemId);
+            return Map.of("status", "success", "message", "Item removed from cart.");
         } catch (BackendGatewayException ex) {
-            flash(redirectAttributes, ex.getMessage(), "error");
+            return Map.of("status", "error", "message", ex.getMessage());
         }
-        return "redirect:/cart";
     }
 
     @PostMapping("/cart/update")
-    public String updateCart(@RequestParam Long itemId,
-                             @RequestParam int quantity,
-                             HttpSession session,
-                             RedirectAttributes redirectAttributes) {
+    public Map<String, Object> updateCart(@RequestParam Long itemId,
+                                          @RequestParam int quantity,
+                                          HttpSession session) {
         StorefrontUser currentUser = currentUserService.currentUser(session);
         if (!currentUser.authenticated()) {
-            redirectAttributes.addFlashAttribute("flashMessage", "Please sign in to update your cart.");
-            redirectAttributes.addFlashAttribute("flashType", "error");
-            return "redirect:/register";
+            return Map.of("error", "authentication_required", "message", "Please sign in to update your cart.");
         }
         try {
-            backendGateway.putStrict(
-                    backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId()
-                            + "/update/" + itemId + "?quantity=" + quantity,
-                    null);
-            flash(redirectAttributes, "Cart updated.", "success");
+            backendGateway.putStrict(backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId() + "/update/" + itemId + "?quantity=" + quantity, null);
+            return Map.of("status", "success", "message", "Cart updated.");
         } catch (BackendGatewayException ex) {
-            flash(redirectAttributes, ex.getMessage(), "error");
+            return Map.of("status", "error", "message", ex.getMessage());
         }
-        return "redirect:/cart";
     }
 
     @PostMapping("/cart/clear")
-    public String clearCart(HttpSession session, RedirectAttributes redirectAttributes) {
+    public Map<String, Object> clearCart(HttpSession session) {
         StorefrontUser currentUser = currentUserService.currentUser(session);
         if (!currentUser.authenticated()) {
-            redirectAttributes.addFlashAttribute("flashMessage", "Please sign in to modify your cart.");
-            redirectAttributes.addFlashAttribute("flashType", "error");
-            return "redirect:/register";
+            return Map.of("error", "authentication_required", "message", "Please sign in to modify your cart.");
         }
         try {
-            backendGateway.deleteStrict(
-                    backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId() + "/clear");
-            flash(redirectAttributes, "Cart cleared.", "success");
+            backendGateway.deleteStrict(backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId() + "/clear");
+            return Map.of("status", "success", "message", "Cart cleared.");
         } catch (BackendGatewayException ex) {
-            flash(redirectAttributes, ex.getMessage(), "error");
+            return Map.of("status", "error", "message", ex.getMessage());
         }
-        return "redirect:/cart";
     }
 
     @PostMapping("/wishlist/add")
-    public String addToWishlist(@RequestParam Long bookId,
-                                @RequestParam String bookTitle,
-                                @RequestParam(defaultValue = "0") double bookPrice,
-                                HttpSession session,
-                                RedirectAttributes redirectAttributes) {
+    public Map<String, Object> addToWishlist(@RequestParam Long bookId,
+                                             @RequestParam String bookTitle,
+                                             @RequestParam(defaultValue = "0") double bookPrice,
+                                             HttpSession session) {
         StorefrontUser currentUser = currentUserService.currentUser(session);
         if (!currentUser.authenticated()) {
-            redirectAttributes.addFlashAttribute("flashMessage", "Please sign in to save items to your wishlist.");
-            redirectAttributes.addFlashAttribute("flashType", "error");
-            return "redirect:/register";
+            return Map.of("error", "authentication_required", "message", "Please sign in to save items to your wishlist.");
         }
         Map<String, Object> request = new HashMap<>();
         request.put("bookId", bookId);
         request.put("bookTitle", bookTitle);
         request.put("bookPrice", bookPrice);
         try {
-            backendGateway.postStrict(
-                    backendGateway.serviceUrls().wishlist() + "/wishlist/add/" + currentUser.userId(),
-                    request);
-            flash(redirectAttributes, "Book saved to wishlist.", "success");
-            return "redirect:/wishlist";
+            backendGateway.postStrict(backendGateway.serviceUrls().wishlist() + "/wishlist/add/" + currentUser.userId(), request);
+            return Map.of("status", "success", "message", "Book saved to wishlist.");
         } catch (BackendGatewayException ex) {
-            flash(redirectAttributes, ex.getMessage(), "error");
-            return "redirect:/book/" + bookId;
+            return Map.of("status", "error", "message", ex.getMessage());
         }
     }
 
     @PostMapping("/review/add")
-    public String addReview(@RequestParam Long bookId,
-                            @RequestParam int rating,
-                            @RequestParam String comment,
-                            HttpSession session,
-                            RedirectAttributes redirectAttributes) {
+    public Map<String, Object> addReview(@RequestParam Long bookId,
+                                         @RequestParam int rating,
+                                         @RequestParam String comment,
+                                         HttpSession session) {
         StorefrontUser currentUser = currentUserService.currentUser(session);
         if (!currentUser.authenticated()) {
-            redirectAttributes.addFlashAttribute("flashMessage", "Please sign in to post a review.");
-            redirectAttributes.addFlashAttribute("flashType", "error");
-            return "redirect:/register";
+            return Map.of("error", "authentication_required", "message", "Please sign in to post a review.");
         }
         Map<String, Object> request = new HashMap<>();
         request.put("bookId", bookId);
@@ -255,38 +208,30 @@ public class BookController {
         request.put("verified", true);
         try {
             backendGateway.postStrict(backendGateway.serviceUrls().review() + "/reviews", request);
-            flash(redirectAttributes, "Thanks for sharing your review.", "success");
+            return Map.of("status", "success", "message", "Thanks for sharing your review.");
         } catch (BackendGatewayException ex) {
-            flash(redirectAttributes, ex.getMessage(), "error");
+            return Map.of("status", "error", "message", ex.getMessage());
         }
-        return "redirect:/book/" + bookId;
     }
 
     @GetMapping("/checkout")
-    public String checkout(Model model, HttpSession session) {
+    public Map<String, Object> checkout(HttpSession session) {
         StorefrontUser currentUser = currentUserService.currentUser(session);
         if (!currentUser.authenticated()) {
-            return "redirect:/register";
+            return Map.of("error", "authentication_required", "message", "Please sign in to proceed to checkout.");
         }
-        Map<String, Object> cart =
-                backendGateway.getObject(backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId());
-        model.addAttribute("cart", cart);
-        model.addAttribute("cartItems", cart.getOrDefault("items", List.of()));
-        model.addAttribute("cartTotal", backendGateway.getDouble(
-                backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId() + "/total", 0.0));
-        return "checkout";
+        Map<String, Object> cart = backendGateway.getObject(backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId());
+        return Map.of("cart", cart, "cartItems", cart.getOrDefault("items", List.of()), "cartTotal", backendGateway.getDouble(backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId() + "/total", 0.0));
     }
 
     @GetMapping("/payment")
-    public String paymentMode(Model model, HttpSession session) {
+    public Map<String, Object> paymentMode(HttpSession session) {
         StorefrontUser currentUser = currentUserService.currentUser(session);
         if (!currentUser.authenticated()) {
-            return "redirect:/register";
+            return Map.of("error", "authentication_required", "message", "Please sign in to access payment options.");
         }
-        Map<String, Object> cart =
-                backendGateway.getObject(backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId());
-        Map<String, Object> wallet =
-                backendGateway.getObject(backendGateway.serviceUrls().wallet() + "/wallet/" + currentUser.walletId());
+        Map<String, Object> cart = backendGateway.getObject(backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId());
+        Map<String, Object> wallet = backendGateway.getObject(backendGateway.serviceUrls().wallet() + "/wallet/" + currentUser.walletId());
         if (wallet.isEmpty()) {
             List<Map<String, Object>> wallets = backendGateway.getList(backendGateway.serviceUrls().wallet() + "/wallet");
             wallet = wallets.isEmpty()
@@ -294,89 +239,59 @@ public class BookController {
                     : wallets.get(0);
             currentUserService.rememberWalletId(session, toLong(wallet.get("walletId")));
         }
-        model.addAttribute("cart", cart);
-        model.addAttribute("cartItems", cart.getOrDefault("items", List.of()));
-        model.addAttribute("cartTotal", backendGateway.getDouble(
-                backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId() + "/total", 0.0));
-        model.addAttribute("wallet", wallet);
-        return "payment";
+        return Map.of("cart", cart, "cartItems", cart.getOrDefault("items", List.of()), "cartTotal", backendGateway.getDouble(backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId() + "/total", 0.0), "wallet", wallet);
     }
 
     @PostMapping("/payment/cod")
-    public String cashOnDelivery(HttpSession session,
-                                 RedirectAttributes redirectAttributes) {
+    public Map<String, Object> cashOnDelivery(HttpSession session) {
         StorefrontUser currentUser = currentUserService.currentUser(session);
         if (!currentUser.authenticated()) {
-            redirectAttributes.addFlashAttribute("flashMessage", "Please sign in to place orders.");
-            redirectAttributes.addFlashAttribute("flashType", "error");
-            return "redirect:/register";
+            return Map.of("error", "authentication_required", "message", "Please sign in to place orders.");
         }
-        Map<String, Object> cart =
-                backendGateway.getObject(backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId());
+        Map<String, Object> cart = backendGateway.getObject(backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId());
         List<Map<String, Object>> items = castList(cart.get("items"));
         if (items.isEmpty()) {
-            flash(redirectAttributes, "Your cart is empty.", "error");
-            return "redirect:/cart";
+            return Map.of("status", "error", "message", "Your cart is empty.");
         }
 
         try {
             for (Map<String, Object> item : items) {
-                backendGateway.postStrict(
-                        backendGateway.serviceUrls().order() + "/orders/place",
-                        buildOrderPayload(currentUser, item, 0.0));
+                backendGateway.postStrict(backendGateway.serviceUrls().order() + "/orders/place", buildOrderPayload(currentUser, item, 0.0));
             }
-            backendGateway.deleteStrict(
-                    backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId() + "/clear");
+            backendGateway.deleteStrict(backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId() + "/clear");
             sendNotification(session, "ORDER", "Your cash-on-delivery order has been placed.");
-            flash(redirectAttributes, "Order placed successfully.", "success");
+            return Map.of("status", "success", "message", "Order placed successfully.");
         } catch (BackendGatewayException ex) {
-            flash(redirectAttributes, ex.getMessage(), "error");
+            return Map.of("status", "error", "message", ex.getMessage());
         }
-        return "redirect:/orders";
     }
 
     @PostMapping("/payment/pay")
-    public String proceedToPay(HttpSession session,
-                               RedirectAttributes redirectAttributes) {
+    public Map<String, Object> proceedToPay(HttpSession session) {
         StorefrontUser currentUser = currentUserService.currentUser(session);
         if (!currentUser.authenticated()) {
-            redirectAttributes.addFlashAttribute("flashMessage", "Please sign in to make payments.");
-            redirectAttributes.addFlashAttribute("flashType", "error");
-            return "redirect:/register";
+            return Map.of("error", "authentication_required", "message", "Please sign in to make payments.");
         }
-        Map<String, Object> cart =
-                backendGateway.getObject(backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId());
+        Map<String, Object> cart = backendGateway.getObject(backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId());
         List<Map<String, Object>> items = castList(cart.get("items"));
-        double total = backendGateway.getDouble(
-                backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId() + "/total", 0.0);
+        double total = backendGateway.getDouble(backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId() + "/total", 0.0);
 
         if (items.isEmpty()) {
-            flash(redirectAttributes, "Your cart is empty.", "error");
-            return "redirect:/cart";
+            return Map.of("status", "error", "message", "Your cart is empty.");
         }
 
         try {
-            backendGateway.postForObjectStrict(
-                    backendGateway.serviceUrls().wallet() + "/wallet/pay/"
-                            + currentUser.walletId() + "?amount=" + total,
-                    null);
-
+            backendGateway.postForObjectStrict(backendGateway.serviceUrls().wallet() + "/wallet/pay/" + currentUser.walletId() + "?amount=" + total, null);
             for (Map<String, Object> item : items) {
                 double lineAmount = toDouble(item.get("price")) * toDouble(item.get("quantity"));
-                backendGateway.postStrict(
-                        backendGateway.serviceUrls().order() + "/orders/online",
-                        buildOrderPayload(currentUser, item, lineAmount));
+                backendGateway.postStrict(backendGateway.serviceUrls().order() + "/orders/online", buildOrderPayload(currentUser, item, lineAmount));
             }
-
-            backendGateway.deleteStrict(
-                    backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId() + "/clear");
+            backendGateway.deleteStrict(backendGateway.serviceUrls().cart() + "/cart/" + currentUser.userId() + "/clear");
             sendNotification(session, "PAYMENT", "Wallet payment completed for your order.");
-            flash(redirectAttributes, "Payment successful and order placed.", "success");
+            return Map.of("status", "success", "message", "Payment successful and order placed.");
         } catch (BackendGatewayException ex) {
-            flash(redirectAttributes, ex.getMessage(), "error");
-            return "redirect:/payment";
+            return Map.of("status", "error", "message", ex.getMessage());
         }
-        return "redirect:/orders";
     }
 
     private Map<String, Object> buildOrderPayload(StorefrontUser currentUser,
@@ -436,7 +351,6 @@ public class BookController {
     }
 
     private void flash(RedirectAttributes redirectAttributes, String message, String type) {
-        redirectAttributes.addFlashAttribute("flashMessage", message);
-        redirectAttributes.addFlashAttribute("flashType", type);
+        // No-op in REST mode
     }
 }

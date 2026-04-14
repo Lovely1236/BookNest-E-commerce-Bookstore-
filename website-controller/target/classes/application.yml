@@ -8,7 +8,7 @@ spring:
     cache: false
 
 services:
-  auth: ${SERVICES_AUTH:http://localhost:8080/auth}
+  auth: ${SERVICES_AUTH:http://localhost:8080/api/auth}
   book: ${SERVICES_BOOK:http://localhost:8080/api/book}
   cart: ${SERVICES_CART:http://localhost:8080/api/cart}
   order: ${SERVICES_ORDER:http://localhost:8080/api/order}
@@ -30,3 +30,17 @@ stripe:
   secret: ${STRIPE_SECRET:sk_test_placeholder}
   webhook:
     secret: ${STRIPE_WEBHOOK_SECRET:}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+openapi:
+  url: ${OPENAPI_SERVER_URL:http://localhost:8080/api/website}
+  
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

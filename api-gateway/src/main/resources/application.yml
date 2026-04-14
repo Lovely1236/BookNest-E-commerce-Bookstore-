@@ -65,6 +65,13 @@ spring:
             - Path=/api/wishlist/**
           filters:
             - StripPrefix=2
+        - id: admin-service
+          uri: lb://ADMIN-SERVICE
+          predicates:
+            - Path=/api/admin/**
+          filters:
+            - StripPrefix=2
+        # website-controller route removed
 
 eureka:
   client:
@@ -106,3 +113,6 @@ springdoc:
         url: /api/notification/v3/api-docs
       - name: wishlist-service
         url: /api/wishlist/v3/api-docs
+      # website-controller removed from Swagger list
+      - name: admin-service
+        url: /api/admin/v3/api-docs

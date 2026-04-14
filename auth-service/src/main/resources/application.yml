@@ -40,6 +40,6 @@ springdoc:
 
 openapi:
   server:
-    url: ${OPENAPI_SERVER_URL:http://localhost:8080}
+    url: ${OPENAPI_SERVER_URL:http://localhost:8080/api/auth}
 
 

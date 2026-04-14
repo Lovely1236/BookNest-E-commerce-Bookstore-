@@ -13,7 +13,7 @@ public class OpenApiConfig {
 
     @Bean
     public OpenAPI authOpenApi(
-            @Value("${openapi.server.url:http://localhost:8080}") String gatewayServerUrl) {
+            @Value("${openapi.server.url:http://localhost:8080/api/auth}") String gatewayServerUrl) {
         return new OpenAPI()
                 .servers(List.of(new Server().url(gatewayServerUrl)));
     }

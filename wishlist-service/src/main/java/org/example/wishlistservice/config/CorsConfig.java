@@ -9,10 +9,8 @@ public class CorsConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOriginPatterns("*")
-                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(false);
+        // CORS is handled by the API Gateway. Avoid registering global CORS mappings here
+        // to prevent duplicate Access-Control-Allow-Origin headers.
+        // Leaving this method empty is intentional.
     }
 }

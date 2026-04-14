@@ -12,7 +12,9 @@ services:
     ports:
       - "3307:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      # Bind MySQL data to a host directory so data survives container recreation.
+      # Use a path outside OneDrive to avoid sync-related corruption.
+      - C:/booknest-data/mysql:/var/lib/mysql
       - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
 # ---------------- EUREKA ----------------
   eureka-server:
@@ -54,8 +56,9 @@ services:
     depends_on:
       - eureka-server
       - mysql
+    # expose the same port externally as the service listens on (server.port)
     ports:
-      - "8086:8082"
+      - "8082:8082"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/bookdb
       SPRING_DATASOURCE_USERNAME: root
@@ -111,8 +114,9 @@ services:
   review-service:
       build: ./review-service
       container_name: review-service
+      # match host:container port to avoid confusion (server.port is 8086)
       ports:
-        - "8087:8086"
+        - "8086:8086"
       depends_on:
         - eureka-server
         - mysql
@@ -127,7 +131,7 @@ services:
       build: ./notification-service
       container_name: notification-service
       ports:
-        - "8088:8087"
+        - "8087:8087"
       depends_on:
         - eureka-server
         - mysql
@@ -147,7 +151,7 @@ services:
       build: ./wishlist-service
       container_name: wishlist-service
       ports:
-        - "8089:8088"
+        - "8088:8088"
       depends_on:
         - eureka-server
         - mysql
@@ -158,31 +162,20 @@ services:
         - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
 
   # ---------------- WEBSITE CONTROLLER ----------------
-  website-controller:
-      build: ./website-controller
-      container_name: website-controller
-      ports:
-        - "8090:8090"
-      depends_on:
-        - api-gateway
-        - auth-service
-        - book-service
-        - cart-service
-        - order-service
-        - wallet-service
-        - review-service
-        - notification-service
-        - wishlist-service
-      environment:
-        - SERVICES_AUTH=http://api-gateway:8080/api/auth
-        - SERVICES_BOOK=http://api-gateway:8080/api/book
-        - SERVICES_CART=http://api-gateway:8080/api/cart
-        - SERVICES_ORDER=http://api-gateway:8080/api/order
-        - SERVICES_WALLET=http://api-gateway:8080/api/wallet
-        - SERVICES_REVIEW=http://api-gateway:8080/api/review
-        - SERVICES_NOTIFICATION=http://api-gateway:8080/api/notification
-        - SERVICES_WISHLIST=http://api-gateway:8080/api/wishlist
+  # website-controller removed: service will no longer be started via docker-compose
   
+  # ---------------- ADMIN SERVICE ----------------
+  admin-service:
+    build: ./admin-service
+    container_name: admin-service
+    # admin-service listens on 8095 (see admin-service application.yml)
+    ports:
+      - "8095:8095"
+    depends_on:
+      - eureka-server
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+
   # ---------------- RABBITMQ ----------------
   rabbitmq:
     image: rabbitmq:3-management
@@ -193,6 +186,9 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
-volumes:
-  mysql_data:
+# No top-level named volumes defined. MySQL uses a host bind at C:/booknest-data/mysql
+
+  # ---------------- ADMIN SERVICE ----------------
+  # admin-service is defined below to build and register with eureka
+
 

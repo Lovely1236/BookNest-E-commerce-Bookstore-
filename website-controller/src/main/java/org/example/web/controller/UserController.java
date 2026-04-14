@@ -6,8 +6,8 @@ import org.example.web.service.BackendGateway;
 import org.example.web.service.BackendGatewayException;
 import org.example.web.service.CurrentUserService;
 import org.example.web.service.StorefrontUser;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -19,7 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@Controller
+@RestController
 @RequiredArgsConstructor
 public class UserController {
 
@@ -27,41 +27,37 @@ public class UserController {
     private final CurrentUserService currentUserService;
 
     @GetMapping("/")
-    public String home() {
-        return "redirect:/home";
+    public Map<String, Object> home() {
+        return Map.of("redirect", "/home");
     }
 
     @GetMapping("/login")
-    public String loginPage() {
-        return "redirect:/register";
+    public Map<String, Object> loginPage() {
+        return Map.of("redirect", "/register");
     }
 
     @GetMapping("/register")
-    public String register(Model model) {
-        model.addAttribute("authLoginUrl", backendGateway.serviceUrls().auth() + "/oauth2/authorization/github");
-        return "register";
+    public Map<String, Object> register() {
+        return Map.of("authLoginUrl", backendGateway.serviceUrls().auth() + "/oauth2/authorization/github");
     }
 
-    @GetMapping("/auth/callback")
-    public String oauthCallback(@RequestParam String token, HttpSession session, RedirectAttributes redirectAttributes) {
+    @GetMapping("/callback")
+    public Map<String, Object> oauthCallback(@RequestParam String token, HttpSession session) {
         try {
             Map<String, Object> profile = backendGateway.getObject(backendGateway.serviceUrls().auth() + "/me", "Bearer " + token);
             currentUserService.storeAuthenticatedUser(session, "Bearer " + token, profile);
-            flash(redirectAttributes, "Signed in via GitHub.", "success");
-            return "redirect:/home";
+            return Map.of("status", "success", "message", "Signed in via GitHub.");
         } catch (Exception ex) {
-            flash(redirectAttributes, "OAuth login failed.", "error");
-            return "redirect:/register";
+            return Map.of("status", "error", "message", "OAuth login failed.");
         }
     }
 
     @PostMapping("/register")
-    public String register(@RequestParam String fullName,
-                           @RequestParam String email,
-                           @RequestParam String password,
-                           @RequestParam(required = false) Long mobile,
-                           HttpSession session,
-                           RedirectAttributes redirectAttributes) {
+    public Map<String, Object> register(@RequestParam String fullName,
+                                        @RequestParam String email,
+                                        @RequestParam String password,
+                                        @RequestParam(required = false) Long mobile,
+                                        HttpSession session) {
         Map<String, Object> request = new LinkedHashMap<>();
         request.put("fullName", fullName);
         request.put("email", email);
@@ -72,36 +68,27 @@ public class UserController {
             Map<String, Object> response =
                     backendGateway.postForObjectStrict(backendGateway.serviceUrls().auth() + "/register", request);
             rememberAuthenticatedUser(session, email, String.valueOf(response.getOrDefault("token", "")));
-            flash(redirectAttributes,
-                    String.valueOf(response.getOrDefault("message", "Account created successfully.")),
-                    "success");
-            return "redirect:/profile";
+            return Map.of("status", "success", "message", String.valueOf(response.getOrDefault("message", "Account created successfully.")));
         } catch (BackendGatewayException ex) {
-            flash(redirectAttributes, ex.getMessage(), "error");
-            return "redirect:/register";
+            return Map.of("status", "error", "message", ex.getMessage());
         }
     }
 
     @PostMapping("/login")
-    public String login(@RequestParam String email,
-                        @RequestParam String password,
-                        HttpSession session,
-                        RedirectAttributes redirectAttributes) {
+    public Map<String, Object> login(@RequestParam String email,
+                                     @RequestParam String password,
+                                     HttpSession session) {
         try {
-            Map<String, Object> response = backendGateway.postForObjectStrict(
-                    backendGateway.serviceUrls().auth() + "/login",
-                    Map.of("email", email, "password", password));
+            Map<String, Object> response = backendGateway.postForObjectStrict(backendGateway.serviceUrls().auth() + "/login", Map.of("email", email, "password", password));
             rememberAuthenticatedUser(session, email, String.valueOf(response.getOrDefault("token", "")));
-            flash(redirectAttributes, "Signed in successfully.", "success");
-            return "redirect:/home";
+            return Map.of("status", "success", "message", "Signed in successfully.");
         } catch (BackendGatewayException ex) {
-            flash(redirectAttributes, ex.getMessage(), "error");
-            return "redirect:/register";
+            return Map.of("status", "error", "message", ex.getMessage());
         }
     }
 
     @GetMapping("/profile")
-    public String viewProfile(Model model, HttpSession session) {
+    public Map<String, Object> viewProfile(HttpSession session) {
         StorefrontUser currentUser = refreshProfile(session);
         Map<String, Object> profile = new LinkedHashMap<>();
         profile.put("fullName", currentUser.fullName());
@@ -110,151 +97,107 @@ public class UserController {
         profile.put("membership", currentUser.membership());
         profile.put("userId", currentUser.userId());
         profile.put("authenticated", currentUser.authenticated());
-        model.addAttribute("profile", profile);
-        return "profile";
+        return Map.of("profile", profile);
     }
 
     @PostMapping("/profile/update")
-    public String updateProfile(@RequestParam String newPassword,
-                                HttpSession session,
-                                RedirectAttributes redirectAttributes) {
+    public Map<String, Object> updateProfile(@RequestParam String newPassword,
+                                             HttpSession session) {
         StorefrontUser currentUser = currentUserService.currentUser(session);
         if (!currentUser.authenticated()) {
-            flash(redirectAttributes, "Please sign in before changing your password.", "error");
-            return "redirect:/register";
+            return Map.of("error", "authentication_required", "message", "Please sign in before changing your password.");
         }
-
         try {
-            backendGateway.putStrict(
-                    backendGateway.serviceUrls().auth() + "/change-password?userId="
-                            + currentUser.userId() + "&newPassword="
-                            + URLEncoder.encode(newPassword, StandardCharsets.UTF_8),
-                    null,
-                    currentUser.token());
-            flash(redirectAttributes, "Password updated successfully.", "success");
+            backendGateway.putStrict(backendGateway.serviceUrls().auth() + "/change-password?userId=" + currentUser.userId() + "&newPassword=" + URLEncoder.encode(newPassword, StandardCharsets.UTF_8), null, currentUser.token());
+            return Map.of("status", "success", "message", "Password updated successfully.");
         } catch (BackendGatewayException ex) {
-            flash(redirectAttributes, ex.getMessage(), "error");
+            return Map.of("status", "error", "message", ex.getMessage());
         }
-        return "redirect:/profile";
     }
 
     @GetMapping("/orders")
-    public String viewOrders(Model model, HttpSession session) {
+    public Map<String, Object> viewOrders(HttpSession session) {
         StorefrontUser currentUser = currentUserService.currentUser(session);
-        model.addAttribute("orders",
-                backendGateway.getList(
-                        backendGateway.serviceUrls().order() + "/orders/user/" + currentUser.userId()));
-        return "orders";
+        return Map.of("orders", backendGateway.getList(backendGateway.serviceUrls().order() + "/orders/user/" + currentUser.userId()));
     }
 
     @GetMapping("/wallet")
-    public String viewWallet(Model model, HttpSession session) {
+    public Map<String, Object> viewWallet(HttpSession session) {
         Map<String, Object> wallet = resolveWallet(session);
         Object walletId = wallet.get("walletId");
         List<Map<String, Object>> statements = List.of();
         if (walletId != null) {
-            statements = backendGateway.getList(
-                    backendGateway.serviceUrls().wallet() + "/wallet/statements/" + walletId);
+            statements = backendGateway.getList(backendGateway.serviceUrls().wallet() + "/wallet/statements/" + walletId);
         }
-
-        model.addAttribute("wallet", wallet);
-        model.addAttribute("statements", statements);
-        return "wallet";
+        return Map.of("wallet", wallet, "statements", statements);
     }
 
     @PostMapping("/wallet/add")
-    public String addMoney(@RequestParam double amount,
-                           HttpSession session,
-                           RedirectAttributes redirectAttributes) {
+    public Map<String, Object> addMoney(@RequestParam double amount, HttpSession session) {
         try {
             Map<String, Object> wallet = resolveWallet(session);
             Long walletId = toLong(wallet.get("walletId"));
-            backendGateway.postForObjectStrict(
-                    backendGateway.serviceUrls().wallet() + "/wallet/addMoney/" + walletId + "?amount=" + amount,
-                    null);
+            backendGateway.postForObjectStrict(backendGateway.serviceUrls().wallet() + "/wallet/addMoney/" + walletId + "?amount=" + amount, null);
             sendNotification(session, "WALLET", "Wallet topped up with Rs. " + amount + ".");
-            flash(redirectAttributes, "Wallet balance updated.", "success");
+            return Map.of("status", "success", "message", "Wallet balance updated.");
         } catch (BackendGatewayException ex) {
-            flash(redirectAttributes, ex.getMessage(), "error");
+            return Map.of("status", "error", "message", ex.getMessage());
         }
-        return "redirect:/wallet";
     }
 
     @GetMapping("/notifications")
-    public String viewNotifications(Model model, HttpSession session) {
+        public Map<String, Object> viewNotifications(HttpSession session) {
         StorefrontUser currentUser = currentUserService.currentUser(session);
-        model.addAttribute("notifications",
-                backendGateway.getList(
-                        backendGateway.serviceUrls().notification() + "/notifications/user/" + currentUser.userId()));
-        model.addAttribute("unreadCount",
-                backendGateway.getString(
-                        backendGateway.serviceUrls().notification() + "/notifications/unread/" + currentUser.userId(),
-                        "0"));
-        return "notifications";
-    }
+        return Map.of(
+            "notifications", backendGateway.getList(backendGateway.serviceUrls().notification() + "/notifications/user/" + currentUser.userId()),
+            "unreadCount", backendGateway.getString(backendGateway.serviceUrls().notification() + "/notifications/unread/" + currentUser.userId(), "0")
+        );
+        }
 
     @PostMapping("/notifications/read")
-    public String markNotificationRead(@RequestParam Long notificationId,
-                                       RedirectAttributes redirectAttributes) {
+    public Map<String, Object> markNotificationRead(@RequestParam Long notificationId) {
         try {
-            backendGateway.putStrict(
-                    backendGateway.serviceUrls().notification() + "/notifications/read/" + notificationId,
-                    null);
-            flash(redirectAttributes, "Notification marked as read.", "success");
+            backendGateway.putStrict(backendGateway.serviceUrls().notification() + "/notifications/read/" + notificationId, null);
+            return Map.of("status", "success", "message", "Notification marked as read.");
         } catch (BackendGatewayException ex) {
-            flash(redirectAttributes, ex.getMessage(), "error");
+            return Map.of("status", "error", "message", ex.getMessage());
         }
-        return "redirect:/notifications";
     }
 
     @PostMapping("/notifications/read-all")
-    public String markAllNotificationsRead(HttpSession session,
-                                           RedirectAttributes redirectAttributes) {
+    public Map<String, Object> markAllNotificationsRead(HttpSession session) {
         StorefrontUser currentUser = currentUserService.currentUser(session);
         try {
-            backendGateway.putStrict(
-                    backendGateway.serviceUrls().notification() + "/notifications/readAll/" + currentUser.userId(),
-                    null);
-            flash(redirectAttributes, "All notifications marked as read.", "success");
+            backendGateway.putStrict(backendGateway.serviceUrls().notification() + "/notifications/readAll/" + currentUser.userId(), null);
+            return Map.of("status", "success", "message", "All notifications marked as read.");
         } catch (BackendGatewayException ex) {
-            flash(redirectAttributes, ex.getMessage(), "error");
+            return Map.of("status", "error", "message", ex.getMessage());
         }
-        return "redirect:/notifications";
     }
 
     @GetMapping("/wishlist")
-    public String viewWishlist(Model model, HttpSession session) {
+    public Map<String, Object> viewWishlist(HttpSession session) {
         StorefrontUser currentUser = currentUserService.currentUser(session);
-        Map<String, Object> wishlist =
-                backendGateway.getObject(
-                        backendGateway.serviceUrls().wishlist() + "/wishlist/" + currentUser.userId());
+        Map<String, Object> wishlist = backendGateway.getObject(backendGateway.serviceUrls().wishlist() + "/wishlist/" + currentUser.userId());
         Object books = wishlist.getOrDefault("books", List.of());
-        model.addAttribute("wishlist", wishlist);
-        model.addAttribute("wishlistBooks", books);
-        return "wishlist";
+        return Map.of("wishlist", wishlist, "wishlistBooks", books);
     }
 
     @PostMapping("/wishlist/remove")
-    public String removeFromWishlist(@RequestParam Long itemId,
-                                     HttpSession session,
-                                     RedirectAttributes redirectAttributes) {
+    public Map<String, Object> removeFromWishlist(@RequestParam Long itemId, HttpSession session) {
         StorefrontUser currentUser = currentUserService.currentUser(session);
         try {
-            backendGateway.deleteStrict(
-                    backendGateway.serviceUrls().wishlist() + "/wishlist/remove/"
-                            + currentUser.userId() + "/" + itemId);
-            flash(redirectAttributes, "Item removed from wishlist.", "success");
+            backendGateway.deleteStrict(backendGateway.serviceUrls().wishlist() + "/wishlist/remove/" + currentUser.userId() + "/" + itemId);
+            return Map.of("status", "success", "message", "Item removed from wishlist.");
         } catch (BackendGatewayException ex) {
-            flash(redirectAttributes, ex.getMessage(), "error");
+            return Map.of("status", "error", "message", ex.getMessage());
         }
-        return "redirect:/wishlist";
     }
 
     @GetMapping("/logout")
-    public String logout(HttpSession session, RedirectAttributes redirectAttributes) {
+    public Map<String, Object> logout(HttpSession session) {
         currentUserService.logout(session);
-        flash(redirectAttributes, "Signed out successfully.", "success");
-        return "redirect:/home";
+        return Map.of("status", "success", "message", "Signed out successfully.");
     }
 
     private void rememberAuthenticatedUser(HttpSession session, String email, String token) {
@@ -319,7 +262,6 @@ public class UserController {
     }
 
     private void flash(RedirectAttributes redirectAttributes, String message, String type) {
-        redirectAttributes.addFlashAttribute("flashMessage", message);
-        redirectAttributes.addFlashAttribute("flashType", type);
+        // no-op for REST mode
     }
 }
