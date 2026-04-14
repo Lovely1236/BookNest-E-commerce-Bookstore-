@@ -36,19 +36,17 @@ public class AuthController {
     public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
         return ResponseEntity.ok(authService.register(request));
     }
-    // LOGIN
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        // LOGIN
+        @PostMapping("/login")
+        public ResponseEntity<?> login(@RequestBody LoginRequest request) {
 
-        String token = authService.login(
-                request.getEmail(),
-                request.getPassword()
+        AuthResponse response = authService.login(
+            request.getEmail(),
+            request.getPassword()
         );
 
-        return ResponseEntity.ok(
-                new AuthResponse(token, "Login successful")
-        );
-    }
+        return ResponseEntity.ok(response);
+        }
     // LOGOUT
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String token) {

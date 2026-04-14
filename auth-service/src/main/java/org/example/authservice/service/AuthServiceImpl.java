@@ -3,11 +3,14 @@ package org.example.authservice.service;
 import org.example.authservice.config.JwtUtil;
 import org.example.authservice.dto.AuthResponse;
 import org.example.authservice.dto.RegisterRequest;
+import org.example.authservice.dto.UserDTO;
 import org.example.authservice.entity.User;
 import org.example.authservice.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -35,16 +38,20 @@ public class AuthServiceImpl implements AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setMobile(request.getMobile());
         user.setRole("ROLE_CUSTOMER");
+        user.setCreatedAt(LocalDateTime.now());
 
         userRepository.save(user);
 
         String token = jwtUtil.generateToken(user.getEmail());
 
-        return new AuthResponse(token, "User registered successfully");
+        UserDTO dto = toDTO(user);
+
+        return new AuthResponse(token, "User registered successfully", dto);
     }
+
     // LOGIN
     @Override
-    public String login(String email, String password) {
+    public AuthResponse login(String email, String password) {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -53,7 +60,11 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("Invalid password");
         }
 
-        return jwtUtil.generateToken(email);
+        String token = jwtUtil.generateToken(email);
+
+        UserDTO dto = toDTO(user);
+
+        return new AuthResponse(token, "Login successful", dto);
     }
 
     // LOGOUT (JWT is stateless)
@@ -105,5 +116,17 @@ public class AuthServiceImpl implements AuthService {
         user.setPasswordHash(passwordEncoder.encode(newPassword));
 
         userRepository.save(user);
+    }
+
+    private UserDTO toDTO(User user) {
+        return new UserDTO(
+                user.getUserId(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getRole(),
+                user.getProvider(),
+                user.getMobile(),
+                user.getCreatedAt()
+        );
     }
 }
