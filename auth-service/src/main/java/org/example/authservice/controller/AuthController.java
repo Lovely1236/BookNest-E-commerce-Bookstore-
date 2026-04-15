@@ -12,12 +12,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
 @RestController
 @RequestMapping("/")
 public class AuthController {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     private AuthService authService;
@@ -27,6 +32,9 @@ public class AuthController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private RestTemplate restTemplate;
 
     @Value("${website.url:http://localhost:8090}")
     private String websiteUrl;
@@ -99,6 +107,7 @@ public class AuthController {
         String email = authentication.getName();
 
         // check if user exists
+        boolean isNewUser = !userRepository.existsByEmail(email);
         User user = userRepository.findByEmail(email)
                 .orElseGet(() -> {
                     User newUser = new User();
@@ -107,6 +116,18 @@ public class AuthController {
                     newUser.setProvider("GITHUB");
                     return userRepository.save(newUser);
                 });
+
+        // Create wallet for new GitHub OAuth users
+        if (isNewUser) {
+            try {
+                String walletServiceUrl = "http://wallet-service:8085/wallet/create";
+                restTemplate.postForObject(walletServiceUrl, null, Object.class);
+                logger.info("Wallet created successfully for GitHub OAuth user: {}", user.getUserId());
+            } catch (Exception e) {
+                logger.warn("Failed to create wallet for GitHub OAuth user: {}. Error: {}", user.getUserId(), e.getMessage());
+                // Don't throw exception - OAuth success should not be blocked by wallet creation failure
+            }
+        }
 
         String token = jwtUtil.generateToken(email);
 

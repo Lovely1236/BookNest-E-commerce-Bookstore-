@@ -9,11 +9,17 @@ import org.example.authservice.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 import java.time.LocalDateTime;
 
 @Service
 public class AuthServiceImpl implements AuthService {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
 
     @Autowired
     private UserRepository userRepository;
@@ -23,6 +29,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private RestTemplate restTemplate;
 
     // REGISTER
     @Override
@@ -40,7 +49,17 @@ public class AuthServiceImpl implements AuthService {
         user.setRole("ROLE_CUSTOMER");
         user.setCreatedAt(LocalDateTime.now());
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        // Automatically create wallet for new user
+        try {
+            String walletServiceUrl = "http://wallet-service:8085/wallet/create";
+            restTemplate.postForObject(walletServiceUrl, null, Object.class);
+            logger.info("Wallet created successfully for user: {}", savedUser.getUserId());
+        } catch (Exception e) {
+            logger.warn("Failed to create wallet for user: {}. Error: {}", savedUser.getUserId(), e.getMessage());
+            // Don't throw exception - user registration should succeed even if wallet creation fails
+        }
 
         String token = jwtUtil.generateToken(user.getEmail());
 
