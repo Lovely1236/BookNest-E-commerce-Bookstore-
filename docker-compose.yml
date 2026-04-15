@@ -48,6 +48,7 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      WEBSITE_URL: http://localhost:5173
 
   # ---------------- BOOK SERVICE ----------------
   book-service:

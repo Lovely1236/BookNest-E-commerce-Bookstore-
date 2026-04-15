@@ -16,6 +16,8 @@ import org.springframework.web.client.RestTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.Map;
 
 @RestController
@@ -102,11 +104,16 @@ public class AuthController {
         return ResponseEntity.ok("Password updated successfully");
     }
     @GetMapping("/oauth-success")
-    public ResponseEntity<?> oauthSuccess(Authentication authentication) {
+    public void oauthSuccess(Authentication authentication, HttpServletResponse response) throws IOException {
+        if (authentication == null) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Not authenticated");
+            return;
+        }
 
         String email = authentication.getName();
+        logger.info("OAuth2 login successful for email: {}", email);
 
-        // check if user exists
+        // Check if user exists, create if not
         boolean isNewUser = !userRepository.existsByEmail(email);
         User user = userRepository.findByEmail(email)
                 .orElseGet(() -> {
@@ -125,14 +132,16 @@ public class AuthController {
                 logger.info("Wallet created successfully for GitHub OAuth user: {}", user.getUserId());
             } catch (Exception e) {
                 logger.warn("Failed to create wallet for GitHub OAuth user: {}. Error: {}", user.getUserId(), e.getMessage());
-                // Don't throw exception - OAuth success should not be blocked by wallet creation failure
             }
         }
 
+        // Generate JWT token
         String token = jwtUtil.generateToken(email);
+        logger.info("Generated JWT token for user: {}", email);
 
-        // Redirect to website callback with token so UI can store session
-        String redirect = websiteUrl + "/auth/callback?token=" + token;
-        return ResponseEntity.status(302).header("Location", redirect).build();
+        // Redirect to frontend with token - using hardcoded URL for now
+        String redirectUrl = "http://localhost:5173/auth/callback?token=" + token;
+        logger.info("Redirecting to: {}", redirectUrl);
+        response.sendRedirect(redirectUrl);
     }
 }
