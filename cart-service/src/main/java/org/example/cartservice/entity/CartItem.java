@@ -18,4 +18,5 @@ public class CartItem {
     private String bookTitle;
     private Double price;
     private Integer quantity;
+    private String bookCoverUrl;
 }

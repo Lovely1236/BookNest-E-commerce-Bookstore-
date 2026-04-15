@@ -37,3 +37,7 @@ openapi:
 notification:
   exchange: notifications.exchange
   routing-key: notifications.routingkey
+
+stripe:
+  secret-key: ${STRIPE_SECRET_KEY}
+  publishable-key: ${STRIPE_PUBLISHABLE_KEY}

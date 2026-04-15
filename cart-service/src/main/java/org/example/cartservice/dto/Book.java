@@ -6,6 +6,7 @@ public class Book {
     private String title;
     private String author;
     private Double price;
+    private String coverImageUrl;
 
     // getters and setters
 
@@ -39,5 +40,13 @@ public class Book {
 
     public void setPrice(Double price) {
         this.price = price;
+    }
+
+    public String getCoverImageUrl() {
+        return coverImageUrl;
+    }
+
+    public void setCoverImageUrl(String coverImageUrl) {
+        this.coverImageUrl = coverImageUrl;
     }
 }

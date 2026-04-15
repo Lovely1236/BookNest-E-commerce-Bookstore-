@@ -9,4 +9,5 @@ public class Book {
 
     private Long productId;
     private String productName;
+    private String coverImageUrl;
 }

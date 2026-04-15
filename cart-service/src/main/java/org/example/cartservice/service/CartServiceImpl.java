@@ -58,7 +58,10 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public void clearCart(Long userId) {
-        cartRepository.deleteByUserId(userId);
+        Cart cart = getCartByUser(userId);
+        cart.getItems().clear();
+        cart.setTotalPrice(0.0);
+        cartRepository.save(cart);
     }
 
     private void updateTotal(Cart cart) {

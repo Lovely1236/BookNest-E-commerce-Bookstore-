@@ -10,6 +10,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
 import java.time.LocalDate;
 
@@ -23,7 +25,13 @@ public class Order {
     private Long orderId;
 
     private Long userId;
+    private Long cartId;
     private LocalDate orderDate;
+    private LocalDate confirmedDate;
+    private LocalDate dispatchedDate;
+    private LocalDate deliveredDate;
+    @JsonProperty("amountPaid")
+    @JsonAlias("amount")
     private double amountPaid;
     private String modeOfPayment;
     private String orderStatus;

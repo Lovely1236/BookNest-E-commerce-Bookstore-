@@ -10,19 +10,23 @@ import java.util.Collections;
 
 @Configuration
 public class OpenApiConfig {
+
+    @Value("${OPENAPI_SERVER_URL:http://localhost:8095}")
+    private String openapiServerUrl;
+
     @Bean
     public OpenAPI adminOpenAPI() {
         OpenAPI openAPI = new OpenAPI()
                 .info(new Info().title("Admin Service API").version("v0.0.1").description("Admin service API documentation"));
-        // If an OPENAPI_SERVER_URL is provided, add it to the generated OpenAPI servers.
+        
+        // Always add the configured server URL
         if (openapiServerUrl != null && !openapiServerUrl.isBlank()) {
-            Server s = new Server();
-            s.setUrl(openapiServerUrl);
-            openAPI.setServers(Collections.singletonList(s));
+            Server server = new Server();
+            server.setUrl(openapiServerUrl);
+            server.setDescription("Admin service server");
+            openAPI.setServers(Collections.singletonList(server));
         }
+        
         return openAPI;
     }
-
-    @Value("${OPENAPI_SERVER_URL:}")
-    private String openapiServerUrl;
 }

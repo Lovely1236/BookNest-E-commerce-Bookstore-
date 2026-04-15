@@ -94,6 +94,8 @@ services:
         - SPRING_DATASOURCE_USERNAME=root
         - SPRING_DATASOURCE_PASSWORD=root
         - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+        -  STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+        - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
 
   # ---------------- WALLET SERVICE ----------------
   wallet-service:
@@ -175,6 +177,7 @@ services:
       - eureka-server
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - OPENAPI_SERVER_URL=http://localhost:8095
 
   # ---------------- RABBITMQ ----------------
   rabbitmq:
@@ -188,7 +191,5 @@ services:
       RABBITMQ_DEFAULT_PASS: guest
 # No top-level named volumes defined. MySQL uses a host bind at C:/booknest-data/mysql
 
-  # ---------------- ADMIN SERVICE ----------------
-  # admin-service is defined below to build and register with eureka
-
+ 
 

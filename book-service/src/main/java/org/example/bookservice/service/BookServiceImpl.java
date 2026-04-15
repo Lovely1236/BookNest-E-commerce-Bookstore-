@@ -40,9 +40,15 @@ public class BookServiceImpl implements BookService {
 
         existing.setTitle(book.getTitle());
         existing.setAuthor(book.getAuthor());
+        existing.setIsbn(book.getIsbn());
         existing.setGenre(book.getGenre());
+        existing.setPublisher(book.getPublisher());
         existing.setPrice(book.getPrice());
         existing.setStock(book.getStock());
+        existing.setRating(book.getRating());
+        existing.setDescription(book.getDescription());
+        existing.setCoverImageUrl(book.getCoverImageUrl());
+        existing.setPublishedDate(book.getPublishedDate());
 
         return repo.save(existing);
     }
@@ -54,6 +60,22 @@ public class BookServiceImpl implements BookService {
     public Book updateStock(Long id, int stock) {
         Book book = getBookById(id);
         book.setStock(stock);
+        return repo.save(book);
+    }
+
+    public Book deductStock(Long id, int quantity) {
+        Book book = getBookById(id);
+        int newStock = book.getStock() - quantity;
+        if (newStock < 0) {
+            throw new RuntimeException("Insufficient stock available for book: " + id);
+        }
+        book.setStock(newStock);
+        return repo.save(book);
+    }
+
+    public Book restoreStock(Long id, int quantity) {
+        Book book = getBookById(id);
+        book.setStock(book.getStock() + quantity);
         return repo.save(book);
     }
 

@@ -22,5 +22,9 @@ public interface BookService {
 
     Book updateStock(Long id, int stock);
 
+    Book deductStock(Long id, int quantity);
+
+    Book restoreStock(Long id, int quantity);
+
     List<Book> getFeaturedBooks();
 }

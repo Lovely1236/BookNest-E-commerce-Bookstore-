@@ -1,22 +1,18 @@
 package org.example.web.controller;
-import jakarta.servlet.http.HttpSession;
+
 import lombok.RequiredArgsConstructor;
 import org.example.web.service.BackendGateway;
 import org.example.web.service.BackendGatewayException;
 import org.example.web.service.CurrentUserService;
 import org.example.web.service.StorefrontUser;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
@@ -24,14 +20,13 @@ import java.util.stream.Collectors;
 @RequestMapping("/admin")
 public class AdminController {
 
+    private static final int LOW_STOCK_THRESHOLD = 10;
+
     private final BackendGateway backendGateway;
     private final CurrentUserService currentUserService;
 
     @GetMapping
-    public Map<String, Object> adminDashboard(HttpSession session) {
-        if (!isAdmin(session)) {
-            return Map.of("error", "admin_required", "message", "Please sign in as an admin to access this resource.");
-        }
+    public Map<String, Object> adminDashboard() {
         List<Map<String, Object>> books = backendGateway.getList(backendGateway.serviceUrls().book() + "/books");
         List<Map<String, Object>> orders = backendGateway.getList(backendGateway.serviceUrls().order() + "/orders");
         List<Map<String, Object>> reviews = backendGateway.getList(backendGateway.serviceUrls().review() + "/reviews");
@@ -62,11 +57,8 @@ public class AdminController {
                                         @RequestParam(defaultValue = "0") double rating,
                                         @RequestParam(required = false) String description,
                                         @RequestParam(required = false) String coverImageUrl,
-                                        @RequestParam(required = false) String publishedDate,
-                                        HttpSession session) {
-        if (!isAdmin(session)) {
-            return Map.of("error", "admin_required", "message", "Please sign in as an admin to perform this action.");
-        }
+                                        @RequestParam(required = false) String publishedDate ){
+        
         Map<String, Object> request = new LinkedHashMap<>();
         request.put("title", title);
         request.put("author", author);
@@ -80,18 +72,75 @@ public class AdminController {
         request.put("coverImageUrl", coverImageUrl);
         request.put("publishedDate", publishedDate);
         try {
-            backendGateway.postStrict(backendGateway.serviceUrls().book() + "/books", request);
+            backendGateway.postStrict(backendGateway.serviceUrls().book() + "/books", sanitizeBookPayload(request));
             return Map.of("status", "success", "message", "Book added successfully.");
         } catch (BackendGatewayException ex) {
             return Map.of("status", "error", "message", ex.getMessage());
         }
     }
 
-    @PostMapping("/deleteBook")
-    public Map<String, Object> deleteBook(@RequestParam Long id, HttpSession session) {
-        if (!isAdmin(session)) {
-            return Map.of("error", "admin_required", "message", "Please sign in as an admin to perform this action.");
+    @GetMapping("/books")
+    public Map<String, Object> manageBooks(@RequestParam(required = false) String search,
+                                           @RequestParam(required = false) String genre,
+                                           @RequestParam(defaultValue = "all") String stockStatus,
+                                           @RequestParam(required = false) Integer limit) {
+        
+
+        List<Map<String, Object>> books = backendGateway.getList(backendGateway.serviceUrls().book() + "/books");
+        List<Map<String, Object>> filtered = books.stream()
+                .filter(book -> matchesSearch(book, search))
+                .filter(book -> matchesGenre(book, genre))
+                .filter(book -> matchesStockStatus(book, stockStatus))
+                .sorted((left, right) -> Long.compare(asLong(right.get("bookId"), 0L), asLong(left.get("bookId"), 0L)))
+                .collect(Collectors.toList());
+
+        if (limit != null && limit > 0 && filtered.size() > limit) {
+            filtered = filtered.subList(0, limit);
         }
+
+        long lowStockCount = books.stream()
+                .filter(book -> {
+                    int stock = asInt(book.get("stock"), 0);
+                    return stock > 0 && stock <= LOW_STOCK_THRESHOLD;
+                })
+                .count();
+        long outOfStockCount = books.stream()
+                .filter(book -> asInt(book.get("stock"), 0) == 0)
+                .count();
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("books", filtered);
+        response.put("total", filtered.size());
+        response.put("totalCount", books.size());
+        response.put("lowStockCount", lowStockCount);
+        response.put("outOfStockCount", outOfStockCount);
+        return response;
+    }
+
+    @PostMapping("/books")
+    public Map<String, Object> createBook(@RequestBody Map<String, Object> request){
+                                         
+        try {
+            return backendGateway.postForMap(backendGateway.serviceUrls().book() + "/books", sanitizeBookPayload(request));
+        } catch (BackendGatewayException ex) {
+            return Map.of("status", "error", "message", ex.getMessage());
+        }
+    }
+
+    @PutMapping("/books/{id}")
+    public Map<String, Object> updateBook(@PathVariable Long id,
+                                          @RequestBody Map<String, Object> request){
+        
+        try {
+            return backendGateway.putForMap(backendGateway.serviceUrls().book() + "/books/" + id, sanitizeBookPayload(request));
+        } catch (BackendGatewayException ex) {
+            return Map.of("status", "error", "message", ex.getMessage());
+        }
+    }
+
+    @DeleteMapping("/books/{id}")
+    public Map<String, Object> deleteBook(@PathVariable Long id) {
+       
         try {
             backendGateway.deleteStrict(backendGateway.serviceUrls().book() + "/books/" + id);
             return Map.of("status", "success", "message", "Book deleted successfully.");
@@ -100,21 +149,39 @@ public class AdminController {
         }
     }
 
-    @GetMapping("/orders")
-    public Map<String, Object> manageOrders(HttpSession session) {
-        if (!isAdmin(session)) {
-            return Map.of("error", "admin_required", "message", "Please sign in as an admin to access this resource.");
+    @PostMapping("/deleteBook")
+    public Map<String, Object> deleteBookLegacy(@RequestParam Long id){
+        return deleteBook(id);
+    }
+
+    @PatchMapping("/books/{id}/stock")
+    public Map<String, Object> updateBookStock(@PathVariable Long id,
+                                               @RequestBody Map<String, Object> request) {
+        int stock = asInt(request.get("stock"), 0);
+        try {
+            return backendGateway.putForMap(
+                    backendGateway.serviceUrls().book() + "/books/" + id + "/stock?stock=" + stock,
+                    null
+            );
+        } catch (BackendGatewayException ex) {
+            return Map.of("status", "error", "message", ex.getMessage());
         }
-        return Map.of("orders", backendGateway.getList(backendGateway.serviceUrls().order() + "/orders"));
+    }
+
+    @GetMapping("/orders")
+    public Map<String, Object> manageOrders(@RequestParam(required = false) String status) {
+        List<Map<String, Object>> orders = backendGateway.getList(backendGateway.serviceUrls().order() + "/orders");
+        if (status != null && !status.isBlank()) {
+            orders = orders.stream()
+                    .filter(order -> status.equalsIgnoreCase(asString(order.get("orderStatus"), "")))
+                    .collect(Collectors.toList());
+        }
+        return Map.of("orders", orders, "total", orders.size());
     }
 
     @PostMapping("/orders/status")
     public Map<String, Object> changeOrderStatus(@RequestParam Long orderId,
-                                                 @RequestParam String status,
-                                                 HttpSession session) {
-        if (!isAdmin(session)) {
-            return Map.of("error", "admin_required", "message", "Please sign in as an admin to perform this action.");
-        }
+                                                 @RequestParam String status) {
         try {
             backendGateway.putStrict(
                     backendGateway.serviceUrls().order() + "/orders/status/" + orderId + "?status=" + status,
@@ -126,15 +193,9 @@ public class AdminController {
     }
 
     @GetMapping("/users")
-    public Map<String, Object> manageUsers(HttpSession session) {
-        if (!isAdmin(session)) {
-            return Map.of("authRequired", true);
-        }
-        StorefrontUser currentUser = currentUserService.currentUser(session);
-        List<Map<String, Object>> users = currentUser.authenticated()
-                ? backendGateway.getList(backendGateway.serviceUrls().auth() + "/users", currentUser.token())
-                : List.of();
-        return Map.of("users", users, "authRequired", !currentUser.authenticated());
+    public Map<String, Object> manageUsers() {
+        List<Map<String, Object>> users = backendGateway.getList(backendGateway.serviceUrls().auth() + "/users");
+        return Map.of("users", users);
     }
 
     @PostMapping("/suspend")
@@ -143,10 +204,7 @@ public class AdminController {
     }
 
     @GetMapping("/analytics")
-    public Map<String, Object> viewAnalytics(HttpSession session) {
-        if (!isAdmin(session)) {
-            return Map.of("error", "admin_required", "message", "Please sign in as an admin to access this resource.");
-        }
+    public Map<String, Object> viewAnalytics() {
         List<Map<String, Object>> orders = backendGateway.getList(backendGateway.serviceUrls().order() + "/orders");
         List<Map<String, Object>> reviews = backendGateway.getList(backendGateway.serviceUrls().review() + "/reviews");
         int notifications = backendGateway.getList(backendGateway.serviceUrls().notification() + "/notifications").size();
@@ -154,19 +212,14 @@ public class AdminController {
     }
 
     @GetMapping("/analytics/stats")
-    public Map<String, Object> analyticsStats(HttpSession session) {
-        if (!isAdmin(session)) {
-            return Map.of("error", "admin_required", "message", "Please sign in as an admin to access this resource.");
-        }
+    public Map<String, Object> analyticsStats() {
         List<Map<String, Object>> orders = backendGateway.getList(backendGateway.serviceUrls().order() + "/orders");
         List<Map<String, Object>> users = backendGateway.getList(backendGateway.serviceUrls().auth() + "/users");
         List<Map<String, Object>> books = backendGateway.getList(backendGateway.serviceUrls().book() + "/books");
 
-        double totalRevenue = orders.stream().mapToDouble(o -> {
-            Object v = o.getOrDefault("total", o.get("amount"));
-            if (v instanceof Number) return ((Number) v).doubleValue();
-            try { return Double.parseDouble(String.valueOf(v)); } catch (Exception ex) { return 0.0; }
-        }).sum();
+        double totalRevenue = orders.stream()
+                .mapToDouble(order -> asDouble(firstNonNull(order, "amountPaid", "total", "amount"), 0.0))
+                .sum();
 
         int totalOrders = orders.size();
         int totalUsers = users.size();
@@ -186,10 +239,7 @@ public class AdminController {
     }
 
     @GetMapping("/analytics/sales")
-    public Map<String, Object> analyticsSales(@RequestParam(defaultValue = "month") String period, HttpSession session) {
-        if (!isAdmin(session)) {
-            return Map.of("error", "admin_required", "message", "Please sign in as an admin to access this resource.");
-        }
+    public Map<String, Object> analyticsSales(@RequestParam(defaultValue = "month") String period) {
         List<Map<String, Object>> orders = backendGateway.getList(backendGateway.serviceUrls().order() + "/orders");
         DateTimeFormatter fmt = DateTimeFormatter.ISO_DATE;
         int days = switch (period.toLowerCase()) {
@@ -200,25 +250,16 @@ public class AdminController {
         LocalDate today = LocalDate.now();
         LocalDate from = today.minusDays(days - 1);
 
-        final Map<String, Object> zeroAgg = new LinkedHashMap<>();
-        zeroAgg.put("amount", 0.0);
-        zeroAgg.put("orders", 0);
-
-        // build byDate map by iterating orders to avoid complex generic collectors
         Map<String, Map<String, Object>> byDate = new LinkedHashMap<>();
-        for (Map<String, Object> o : orders) {
-            Object raw = o.getOrDefault("createdAt", o.get("date"));
-            String dateStr = String.valueOf(raw == null ? today.toString() : raw);
-            if (dateStr.length() >= 10) dateStr = dateStr.substring(0, 10);
+        for (Map<String, Object> order : orders) {
+            String rawDate = asString(firstNonNull(order, "orderDate", "createdAt", "date"), today.toString());
+            String dateStr = rawDate.length() >= 10 ? rawDate.substring(0, 10) : rawDate;
             LocalDate d;
             try {
                 d = LocalDate.parse(dateStr);
             } catch (Exception ex) { continue; }
             if (d.isBefore(from) || d.isAfter(today)) continue;
-            double amt = 0.0;
-            Object v = o.getOrDefault("total", o.get("amount"));
-            if (v instanceof Number) amt = ((Number) v).doubleValue();
-            else try { amt = Double.parseDouble(String.valueOf(v)); } catch (Exception ignored) {}
+            double amt = asDouble(firstNonNull(order, "amountPaid", "total", "amount"), 0.0);
 
             Map<String, Object> agg = byDate.computeIfAbsent(dateStr, k -> {
                 Map<String, Object> mm = new LinkedHashMap<>();
@@ -250,66 +291,70 @@ public class AdminController {
     }
 
     @GetMapping("/analytics/top-books")
-    public Map<String, Object> analyticsTopBooks(@RequestParam(defaultValue = "10") int limit, HttpSession session) {
-        if (!isAdmin(session)) {
-            return Map.of("error", "admin_required", "message", "Please sign in as an admin to access this resource.");
-        }
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> analyticsTopBooks(@RequestParam(defaultValue = "10") int limit) {
         List<Map<String, Object>> orders = backendGateway.getList(backendGateway.serviceUrls().order() + "/orders");
-        Map<String, Integer> counts = new java.util.HashMap<>();
-        Map<String, Double> revenue = new java.util.HashMap<>();
-        for (Map<String, Object> o : orders) {
-            Object itemsObj = o.get("items");
-            if (itemsObj instanceof List) {
-                List<?> items = (List<?>) itemsObj;
-                for (Object io : items) {
-                    if (io instanceof Map) {
-                        Map<String, Object> im = (Map<String, Object>) io;
-                        Object idObj = im.containsKey("bookId") ? im.get("bookId") : im.get("id");
-                        String id = String.valueOf(idObj == null ? "" : idObj);
+        List<Map<String, Object>> books = backendGateway.getList(backendGateway.serviceUrls().book() + "/books");
+        Map<String, Map<String, Object>> booksById = books.stream()
+                .collect(Collectors.toMap(
+                        book -> asString(firstNonNull(book, "bookId", "id"), ""),
+                        book -> book,
+                        (left, right) -> left
+                ));
 
-                        Object qtyObj = im.containsKey("quantity") ? im.get("quantity") : im.getOrDefault("qty", 1);
-                        int qty;
-                        if (qtyObj instanceof Number) qty = ((Number) qtyObj).intValue();
-                        else try { qty = Integer.parseInt(String.valueOf(qtyObj)); } catch (Exception ex) { qty = 1; }
+        Map<String, Integer> counts = new LinkedHashMap<>();
+        Map<String, Double> revenue = new LinkedHashMap<>();
+        Map<String, String> titles = new LinkedHashMap<>();
+        Map<String, String> authors = new LinkedHashMap<>();
 
-                        Object priceObj = im.getOrDefault("price", 0);
-                        double price;
-                        if (priceObj instanceof Number) price = ((Number) priceObj).doubleValue();
-                        else try { price = Double.parseDouble(String.valueOf(priceObj)); } catch (Exception ex) { price = 0.0; }
-
-                        counts.put(id, counts.getOrDefault(id, 0) + qty);
-                        revenue.put(id, revenue.getOrDefault(id, 0.0) + price * qty);
-                    }
-                }
+        for (Map<String, Object> order : orders) {
+            Object bookObject = order.get("book");
+            if (!(bookObject instanceof Map<?, ?> rawBookMap)) {
+                continue;
             }
+
+            Map<String, Object> orderBook = (Map<String, Object>) rawBookMap;
+            String bookId = asString(firstNonNull(orderBook, "productId", "bookId", "id"), "");
+            if (bookId.isBlank()) {
+                continue;
+            }
+
+            int quantity = asInt(firstNonNull(order, "quantity", "qty"), 1);
+            double amount = asDouble(firstNonNull(order, "amountPaid", "total", "amount"), 0.0);
+            Map<String, Object> bookDetails = booksById.getOrDefault(bookId, Map.of());
+
+            counts.put(bookId, counts.getOrDefault(bookId, 0) + quantity);
+            revenue.put(bookId, revenue.getOrDefault(bookId, 0.0) + amount);
+            titles.put(bookId, asString(firstNonNull(bookDetails, "title", "productName", "name"), "Book #" + bookId));
+            authors.put(bookId, asString(firstNonNull(bookDetails, "author", "authorName"), "Unknown Author"));
         }
-        List<Map<String, Object>> sorted = counts.entrySet().stream()
-            .map(e -> {
-                Map<String, Object> m = new LinkedHashMap<>();
-                m.put("bookId", e.getKey());
-                m.put("soldCount", e.getValue());
-                m.put("revenue", revenue.getOrDefault(e.getKey(), 0.0));
-                return m;
-            })
-            .sorted((a, b) -> Double.compare(((Number) b.get("revenue")).doubleValue(), ((Number) a.get("revenue")).doubleValue()))
-            .limit(limit)
-            .collect(Collectors.toList());
-        return Map.of("topBooks", sorted);
+
+        List<Map<String, Object>> topBooks = counts.entrySet().stream()
+                .map(entry -> {
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("bookId", entry.getKey());
+                    item.put("title", titles.getOrDefault(entry.getKey(), "Book #" + entry.getKey()));
+                    item.put("author", authors.getOrDefault(entry.getKey(), "Unknown Author"));
+                    item.put("soldCount", entry.getValue());
+                    item.put("revenue", revenue.getOrDefault(entry.getKey(), 0.0));
+                    return item;
+                })
+                .sorted((left, right) -> Double.compare(asDouble(right.get("revenue"), 0.0), asDouble(left.get("revenue"), 0.0)))
+                .limit(limit)
+                .collect(Collectors.toList());
+        return Map.of("topBooks", topBooks);
     }
 
     @GetMapping("/analytics/low-stock")
-    public Map<String, Object> analyticsLowStock(@RequestParam(defaultValue = "10") int threshold, HttpSession session) {
-        if (!isAdmin(session)) {
-            return Map.of("error", "admin_required", "message", "Please sign in as an admin to access this resource.");
-        }
+    public Map<String, Object> analyticsLowStock(@RequestParam(defaultValue = "10") int threshold) {
         List<Map<String, Object>> books = backendGateway.getList(backendGateway.serviceUrls().book() + "/books");
         List<Map<String, Object>> low = books.stream().filter(b -> {
             Object s = b.get("stock");
             int stock = s instanceof Number ? ((Number) s).intValue() : Integer.parseInt(String.valueOf(s == null ? "0" : s));
-            return stock < threshold;
+            return stock <= threshold;
         }).map(b -> {
             Map<String, Object> m = new LinkedHashMap<>();
-            m.put("bookId", b.get("id"));
+            m.put("bookId", firstNonNull(b, "bookId", "id"));
             m.put("title", b.get("title"));
             m.put("stock", b.get("stock"));
             return m;
@@ -318,18 +363,12 @@ public class AdminController {
     }
 
     @GetMapping("/reviews")
-    public Map<String, Object> viewAllReviews(HttpSession session) {
-        if (!isAdmin(session)) {
-            return Map.of("error", "admin_required", "message", "Please sign in as an admin to access this resource.");
-        }
+    public Map<String, Object> viewAllReviews() {
         return Map.of("reviews", backendGateway.getList(backendGateway.serviceUrls().review() + "/reviews"));
     }
 
     @PostMapping("/review/moderate")
-    public Map<String, Object> moderateReview(@RequestParam Long reviewId, HttpSession session) {
-        if (!isAdmin(session)) {
-            return Map.of("error", "admin_required", "message", "Please sign in as an admin to perform this action.");
-        }
+    public Map<String, Object> moderateReview(@RequestParam Long reviewId) {
         try {
             backendGateway.deleteStrict(backendGateway.serviceUrls().review() + "/reviews/" + reviewId);
             return Map.of("status", "success", "message", "Review removed.");
@@ -339,20 +378,13 @@ public class AdminController {
     }
 
     @GetMapping("/inventory")
-    public Map<String, Object> viewInventory(HttpSession session) {
-        if (!isAdmin(session)) {
-            return Map.of("error", "admin_required", "message", "Please sign in as an admin to access this resource.");
-        }
+    public Map<String, Object> viewInventory() {
         return Map.of("books", backendGateway.getList(backendGateway.serviceUrls().book() + "/books"));
     }
 
     @PostMapping("/inventory/update")
     public Map<String, Object> updateStock(@RequestParam Long id,
-                                           @RequestParam int stock,
-                                           HttpSession session) {
-        if (!isAdmin(session)) {
-            return Map.of("error", "admin_required", "message", "Please sign in as an admin to perform this action.");
-        }
+                                           @RequestParam int stock) {
         try {
             backendGateway.putStrict(
                     backendGateway.serviceUrls().book() + "/books/" + id + "/stock?stock=" + stock,
@@ -363,13 +395,114 @@ public class AdminController {
         }
     }
 
-    private boolean isAdmin(HttpSession session) {
-        StorefrontUser currentUser = currentUserService.currentUser(session);
+    private boolean isAdmin(String authorizationHeader) {
+        StorefrontUser currentUser = currentUserService.currentUser(authorizationHeader);
         return currentUser.authenticated() && currentUser.isAdmin();
     }
 
-    private void flash(RedirectAttributes redirectAttributes, String message, String type) {
-        redirectAttributes.addFlashAttribute("flashMessage", message);
-        redirectAttributes.addFlashAttribute("flashType", type);
+    private boolean matchesSearch(Map<String, Object> book, String search) {
+        if (search == null || search.isBlank()) {
+            return true;
+        }
+        String query = search.trim().toLowerCase();
+        return List.of("title", "author", "isbn", "publisher", "genre").stream()
+                .map(book::get)
+                .filter(Objects::nonNull)
+                .map(String::valueOf)
+                .map(String::toLowerCase)
+                .anyMatch(value -> value.contains(query));
+    }
+
+    private boolean matchesGenre(Map<String, Object> book, String genre) {
+        if (genre == null || genre.isBlank()) {
+            return true;
+        }
+        return genre.equalsIgnoreCase(asString(book.get("genre"), ""));
+    }
+
+    private boolean matchesStockStatus(Map<String, Object> book, String stockStatus) {
+        int stock = asInt(book.get("stock"), 0);
+        String normalizedStatus = stockStatus == null ? "all" : stockStatus.trim().toLowerCase();
+        return switch (normalizedStatus) {
+            case "out" -> stock == 0;
+            case "low" -> stock > 0 && stock <= LOW_STOCK_THRESHOLD;
+            case "healthy" -> stock > LOW_STOCK_THRESHOLD;
+            default -> true;
+        };
+    }
+
+    private Map<String, Object> sanitizeBookPayload(Map<String, Object> request) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("title", normalizeText(request.get("title")));
+        payload.put("author", normalizeText(request.get("author")));
+        payload.put("isbn", normalizeText(request.get("isbn")));
+        payload.put("genre", normalizeText(request.get("genre")));
+        payload.put("publisher", normalizeText(request.get("publisher")));
+        payload.put("price", asDouble(request.get("price"), 0.0));
+        payload.put("stock", asInt(request.get("stock"), 0));
+        payload.put("rating", asDouble(request.get("rating"), 0.0));
+        payload.put("description", normalizeText(request.get("description")));
+        payload.put("coverImageUrl", normalizeText(request.get("coverImageUrl")));
+        payload.put("publishedDate", normalizeText(request.get("publishedDate")));
+        return payload;
+    }
+
+    private String normalizeText(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String text = String.valueOf(value).trim();
+        return text.isEmpty() ? null : text;
+    }
+
+    private Object firstNonNull(Map<String, Object> source, String... keys) {
+        for (String key : keys) {
+            Object value = source.get(key);
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private String asString(Object value, String fallback) {
+        if (value == null) {
+            return fallback;
+        }
+        String text = String.valueOf(value).trim();
+        return text.isEmpty() || "null".equalsIgnoreCase(text) ? fallback : text;
+    }
+
+    private long asLong(Object value, long fallback) {
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        try {
+            return Long.parseLong(String.valueOf(value));
+        } catch (Exception ex) {
+            return fallback;
+        }
+    }
+
+    private int asInt(Object value, int fallback) {
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        try {
+            return Integer.parseInt(String.valueOf(value));
+        } catch (Exception ex) {
+            return fallback;
+        }
+    }
+
+    private double asDouble(Object value, double fallback) {
+        if (value instanceof Number number) {
+            return number.doubleValue();
+        }
+        try {
+            return Double.parseDouble(String.valueOf(value));
+        } catch (Exception ex) {
+            return fallback;
+        }
     }
 }

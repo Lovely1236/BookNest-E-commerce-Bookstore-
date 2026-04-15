@@ -3,6 +3,7 @@ package org.example.web.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -35,13 +36,52 @@ public class SimpleBackendGateway implements BackendGateway {
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> getList(String url, String token) {
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", "Bearer " + token);
-            HttpEntity<Void> entity = new HttpEntity<>(headers);
-            ResponseEntity<Object> resp = restTemplate.exchange(url, org.springframework.http.HttpMethod.GET, entity, Object.class);
+            HttpEntity<Void> entity = new HttpEntity<>(authHeaders(token));
+            ResponseEntity<Object> resp = restTemplate.exchange(url, HttpMethod.GET, entity, Object.class);
             Object body = resp.getBody();
             if (body instanceof List) return (List<Map<String,Object>>) body;
             return List.of();
+        } catch (Exception ex) {
+            throw new BackendGatewayException(ex.getMessage(), ex);
+        }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getMap(String url, String token) {
+        try {
+            HttpEntity<Void> entity = new HttpEntity<>(authHeaders(token));
+            ResponseEntity<Object> resp = restTemplate.exchange(url, HttpMethod.GET, entity, Object.class);
+            Object body = resp.getBody();
+            if (body instanceof Map) return (Map<String, Object>) body;
+            return Map.of();
+        } catch (Exception ex) {
+            throw new BackendGatewayException(ex.getMessage(), ex);
+        }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> postForMap(String url, Object request) throws BackendGatewayException {
+        try {
+            ResponseEntity<Object> response = restTemplate.postForEntity(url, request, Object.class);
+            Object body = response.getBody();
+            if (body instanceof Map) return (Map<String, Object>) body;
+            return Map.of();
+        } catch (Exception ex) {
+            throw new BackendGatewayException(ex.getMessage(), ex);
+        }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> putForMap(String url, Object request) throws BackendGatewayException {
+        try {
+            HttpEntity<Object> entity = new HttpEntity<>(request);
+            ResponseEntity<Object> response = restTemplate.exchange(url, HttpMethod.PUT, entity, Object.class);
+            Object body = response.getBody();
+            if (body instanceof Map) return (Map<String, Object>) body;
+            return Map.of();
         } catch (Exception ex) {
             throw new BackendGatewayException(ex.getMessage(), ex);
         }
@@ -76,4 +116,10 @@ public class SimpleBackendGateway implements BackendGateway {
 
     @Override
     public ServiceUrls serviceUrls() { return serviceUrls; }
+
+    private HttpHeaders authHeaders(String token) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + token);
+        return headers;
+    }
 }

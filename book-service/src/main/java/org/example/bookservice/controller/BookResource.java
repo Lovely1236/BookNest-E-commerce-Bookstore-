@@ -59,6 +59,16 @@ public class BookResource {
         return service.updateStock(id, stock);
     }
 
+    @PutMapping("/{id}/deduct-stock")
+    public Book deductStock(@PathVariable Long id, @RequestParam int quantity) {
+        return service.deductStock(id, quantity);
+    }
+
+    @PutMapping("/{id}/restore-stock")
+    public Book restoreStock(@PathVariable Long id, @RequestParam int quantity) {
+        return service.restoreStock(id, quantity);
+    }
+
     @GetMapping("/featured")
     public List<Book> featured() {
         return service.getFeaturedBooks();

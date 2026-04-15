@@ -10,6 +10,7 @@ import org.example.orderservice.dto.NotificationMessage;
 import org.example.orderservice.publisher.NotificationPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
@@ -22,6 +23,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final AddressRepository addressRepository;
     private final NotificationPublisher notificationPublisher;
+    private final RestTemplate restTemplate;
 
     @Override
     public List<Order> getAllOrders() {
@@ -40,7 +42,23 @@ public class OrderServiceImpl implements OrderService {
             order.setModeOfPayment("COD");
         }
         order.setOrderStatus("PLACED");
+        
+        // Log the order details for debugging
+        System.out.println("Placing order - amountPaid: " + order.getAmountPaid() + ", cartId: " + order.getCartId());
+        
         Order saved = orderRepository.save(order);
+        
+        // Deduct stock from book
+        try {
+            if (order.getBook() != null && order.getBook().getProductId() != null && order.getQuantity() > 0) {
+                String url = "http://book-service:8081/books/" + order.getBook().getProductId() + "/deduct-stock?quantity=" + order.getQuantity();
+                restTemplate.put(url, null);
+                System.out.println("Stock deducted for book: " + order.getBook().getProductId() + ", quantity: " + order.getQuantity());
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to deduct stock: " + e.getMessage());
+            // Don't fail order if stock deduction fails - log and continue
+        }
 
         // publish notification
         try {
@@ -79,6 +97,16 @@ public class OrderServiceImpl implements OrderService {
     public String changeOrderStatus(Long orderId, String status) {
         Order order = getExistingOrder(orderId);
         order.setOrderStatus(status);
+        
+        // Set the appropriate date based on status
+        if ("CONFIRMED".equals(status)) {
+            order.setConfirmedDate(LocalDate.now());
+        } else if ("DISPATCHED".equals(status)) {
+            order.setDispatchedDate(LocalDate.now());
+        } else if ("DELIVERED".equals(status)) {
+            order.setDeliveredDate(LocalDate.now());
+        }
+        
         orderRepository.save(order);
         return "Status Updated";
     }
@@ -88,6 +116,22 @@ public class OrderServiceImpl implements OrderService {
         if (!orderRepository.existsById(orderId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with id " + orderId);
         }
+        
+        // Get the order to access book information for stock restoration
+        Order order = getExistingOrder(orderId);
+        
+        // Restore stock when order is cancelled
+        try {
+            if (order.getBook() != null && order.getBook().getProductId() != null && order.getQuantity() > 0) {
+                String url = "http://book-service:8081/books/" + order.getBook().getProductId() + "/restore-stock?quantity=" + order.getQuantity();
+                restTemplate.put(url, null);
+                System.out.println("Stock restored for book: " + order.getBook().getProductId() + ", quantity: " + order.getQuantity());
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to restore stock: " + e.getMessage());
+            // Log but don't fail - still delete the order
+        }
+        
         orderRepository.deleteById(orderId);
     }
 
