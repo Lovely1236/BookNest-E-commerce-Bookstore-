@@ -17,7 +17,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class StripeService {
 
-    @Value("${stripe.api.key}")
+    @Value("${stripe.secret-key}")
     private String stripeApiKey;
 
     public PaymentIntentResponse createPaymentIntent(Long orderId, double amount, String currency) throws StripeException {

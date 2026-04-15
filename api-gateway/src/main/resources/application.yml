@@ -64,13 +64,13 @@ spring:
           predicates:
             - Path=/api/wishlist/**
           filters:
-            - StripPrefix=1
+            - StripPrefix=2
         - id: admin-service
           uri: lb://ADMIN-SERVICE
           predicates:
             - Path=/api/admin/**
           filters:
-            - StripPrefix=1
+            - StripPrefix=2
         # website-controller route removed
 
 eureka:
