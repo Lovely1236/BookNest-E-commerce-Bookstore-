@@ -13,7 +13,7 @@ services:
       - "3307:3306"
     volumes:
       # Bind MySQL data to a host directory so data survives container recreation.
-      # Use a path outside OneDrive to avoid sync-related corruption.
+      
       - C:/booknest-data/mysql:/var/lib/mysql
       - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
 # ---------------- EUREKA ----------------
@@ -164,8 +164,6 @@ services:
         - SPRING_DATASOURCE_PASSWORD=root
         - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
 
-  # ---------------- WEBSITE CONTROLLER ----------------
-  # website-controller removed: service will no longer be started via docker-compose
   
   # ---------------- ADMIN SERVICE ----------------
   admin-service:
