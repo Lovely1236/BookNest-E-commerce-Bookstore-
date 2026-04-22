@@ -6,19 +6,14 @@ import org.example.cartservice.dto.Book;
 import org.example.cartservice.entity.Cart;
 import org.example.cartservice.entity.CartItem;
 import org.example.cartservice.service.CartService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
-
 @RestController
 @RequestMapping("/cart")
 @RequiredArgsConstructor
 public class CartResource {
 
     private final CartService cartService;
-
     private final BookClient bookClient;
-
 
     // GET CART
     @GetMapping("/{userId}")
