@@ -2,6 +2,7 @@ package org.example.orderservice.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.example.orderservice.entity.Address;
+import org.example.orderservice.entity.Book;
 import org.example.orderservice.entity.Order;
 import org.example.orderservice.repository.AddressRepository;
 import org.example.orderservice.repository.OrderRepository;
@@ -15,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +39,8 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Order placeOrder(Order order) {
+        enrichOrderFromCart(order);
+
         order.setOrderDate(LocalDate.now());
         if (order.getModeOfPayment() == null || order.getModeOfPayment().isBlank()) {
             order.setModeOfPayment("COD");
@@ -149,5 +153,87 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Order not found with id " + orderId));
+    }
+
+    @SuppressWarnings("unchecked")
+    private void enrichOrderFromCart(Order order) {
+        if (order == null || order.getUserId() == null) {
+            return;
+        }
+
+        try {
+            Map<String, Object> cart = restTemplate.getForObject(
+                    "http://cart-service:8083/cart/" + order.getUserId(), Map.class);
+
+            if (cart == null) {
+                return;
+            }
+
+            List<Map<String, Object>> items = (List<Map<String, Object>>) cart.get("items");
+            if (items == null || items.isEmpty()) {
+                System.out.println("Order enrichment skipped: cart has no items for user " + order.getUserId());
+                return;
+            }
+            System.out.println("Order enrichment: found " + items.size() + " cart item(s) for user " + order.getUserId());
+
+            Map<String, Object> firstItem = items.get(0);
+            Book embeddedBook = new Book();
+
+            Number productId = (Number) firstItem.get("bookId");
+            if (productId != null) {
+                embeddedBook.setProductId(productId.longValue());
+            }
+
+            embeddedBook.setProductName((String) firstItem.get("bookTitle"));
+            embeddedBook.setCoverImageUrl((String) firstItem.get("bookCoverUrl"));
+
+            // Fallback: resolve missing title/cover from book-service through gateway
+            if ((embeddedBook.getProductName() == null || embeddedBook.getProductName().isBlank()
+                    || embeddedBook.getCoverImageUrl() == null || embeddedBook.getCoverImageUrl().isBlank())
+                    && embeddedBook.getProductId() != null) {
+                try {
+                    Map<String, Object> book = restTemplate.getForObject(
+                            "http://api-gateway:8080/api/book/books/" + embeddedBook.getProductId(), Map.class);
+                    if (book != null) {
+                        if (embeddedBook.getProductName() == null || embeddedBook.getProductName().isBlank()) {
+                            embeddedBook.setProductName((String) book.get("title"));
+                        }
+                        if (embeddedBook.getCoverImageUrl() == null || embeddedBook.getCoverImageUrl().isBlank()) {
+                            embeddedBook.setCoverImageUrl((String) book.get("coverImageUrl"));
+                        }
+                    }
+                } catch (Exception ignored) {
+                    // Keep order placement resilient even if enrichment fallback fails
+                }
+            }
+
+            if (order.getBook() == null) {
+                order.setBook(embeddedBook);
+            }
+
+            if (order.getQuantity() <= 0) {
+                int totalQty = items.stream()
+                        .map(i -> (Number) i.get("quantity"))
+                        .filter(q -> q != null)
+                        .mapToInt(Number::intValue)
+                        .sum();
+                order.setQuantity(totalQty > 0 ? totalQty : 1);
+            }
+
+            if (order.getAmountPaid() <= 0) {
+                Number totalPrice = (Number) cart.get("totalPrice");
+                if (totalPrice != null) {
+                    order.setAmountPaid(totalPrice.doubleValue());
+                }
+            }
+
+            System.out.println("Order enrichment result - productId: "
+                    + (order.getBook() != null ? order.getBook().getProductId() : null)
+                    + ", productName: "
+                    + (order.getBook() != null ? order.getBook().getProductName() : null)
+                    + ", quantity: " + order.getQuantity());
+        } catch (Exception e) {
+            System.err.println("Failed to enrich order from cart: " + e.getMessage());
+        }
     }
 }
