@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Notifications</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav('notifications')}"></div>
+<div th:replace="~{fragments :: flash}"></div>
+<main class="page">
+    <section class="card">
+        <div class="section-head">
+            <div>
+                <p class="eyebrow">Notifications</p>
+                <h1>Inbox</h1>
+            </div>
+            <form action="/notifications/read-all" method="post">
+                <button class="button ghost" type="submit">Mark All Read</button>
+            </form>
+        </div>
+        <p>Unread Count: <strong th:text="${unreadCount}">0</strong></p>
+        <div class="list">
+            <article class="list-item" th:each="notification : ${notifications}">
+                <div class="list-item-header">
+                    <strong th:text="${notification['type']}">ORDER</strong>
+                    <span class="status-badge"
+                          th:classappend="${notification['read'] ?: notification['isRead']} ? ' success' : ' pending'"
+                          th:text="${(notification['read'] ?: notification['isRead']) ? 'Read' : 'Unread'}">Unread</span>
+                </div>
+                <p th:text="${notification['message']}">Message</p>
+                <p class="meta" th:text="${notification['createdAt'] ?: 'Pending timestamp'}">Time</p>
+                <form action="/notifications/read" method="post">
+                    <input type="hidden" name="notificationId" th:value="${notification['notificationId']}">
+                    <button class="button secondary" type="submit">Mark Read</button>
+                </form>
+            </article>
+        </div>
+        <div class="empty-state" th:if="${#lists.isEmpty(notifications)}">
+            No notifications yet. Actions like wallet top-ups and orders will start appearing here.
+        </div>
+    </section>
+</main>
+</body>
+</html>

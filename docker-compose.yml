@@ -1,0 +1,194 @@
+version: '3.8'
+
+services:
+
+# ---------------- MYSQL ----------------
+  mysql:
+    image: mysql:8
+    container_name: booknest-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3307:3306"
+    volumes:
+      # Bind MySQL data to a host directory so data survives container recreation.
+      
+      - C:/booknest-data/mysql:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+# ---------------- EUREKA ----------------
+  eureka-server:
+    build: ./eureka-server
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+
+  # ---------------- API GATEWAY ----------------
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    depends_on:
+      - eureka-server
+    ports:
+      - "8080:8080"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+
+  # ---------------- AUTH SERVICE ----------------
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    depends_on:
+      - mysql
+      - eureka-server
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/booknest_auth
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      WEBSITE_URL: http://localhost:5173
+
+  # ---------------- BOOK SERVICE ----------------
+  book-service:
+    build: ./book-service
+    container_name: book-service
+    depends_on:
+      - eureka-server
+      - mysql
+    # expose the same port externally as the service listens on (server.port)
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/bookdb
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+
+    # --------------CART SERVICE --------------------
+  cart-service:
+      build: ./cart-service
+      container_name: cart-service
+      ports:
+        - "8083:8083"
+      depends_on:
+        - eureka-server
+        - mysql
+      environment:
+        - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/cart_db
+        - SPRING_DATASOURCE_USERNAME=root
+        - SPRING_DATASOURCE_PASSWORD=root
+        - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+
+  # ---------------- ORDER SERVICE ----------------
+  order-service:
+      build: ./order-service
+      container_name: order-service
+      ports:
+        - "8084:8084"
+      depends_on:
+        - eureka-server
+        - mysql
+      environment:
+        - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/order_db
+        - SPRING_DATASOURCE_USERNAME=root
+        - SPRING_DATASOURCE_PASSWORD=root
+        - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+        -  STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+        - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+
+  # ---------------- WALLET SERVICE ----------------
+  wallet-service:
+      build: ./wallet-service
+      container_name: wallet-service
+      ports:
+        - "8085:8085"
+      depends_on:
+        - eureka-server
+        - mysql
+      environment:
+        - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/wallet_db
+        - SPRING_DATASOURCE_USERNAME=root
+        - SPRING_DATASOURCE_PASSWORD=root
+        - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+
+  # ---------------- REVIEW SERVICE ----------------
+  review-service:
+      build: ./review-service
+      container_name: review-service
+      # match host:container port to avoid confusion (server.port is 8086)
+      ports:
+        - "8086:8086"
+      depends_on:
+        - eureka-server
+        - mysql
+      environment:
+        - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/review_db
+        - SPRING_DATASOURCE_USERNAME=root
+        - SPRING_DATASOURCE_PASSWORD=root
+        - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+
+  # ---------------- NOTIFICATION SERVICE ----------------
+  notification-service:
+      build: ./notification-service
+      container_name: notification-service
+      ports:
+        - "8087:8087"
+      depends_on:
+        - eureka-server
+        - mysql
+        - rabbitmq
+      environment:
+        - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/notification_db
+        - SPRING_DATASOURCE_USERNAME=root
+        - SPRING_DATASOURCE_PASSWORD=root
+        - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+        - RABBITMQ_HOST=rabbitmq
+        - RABBITMQ_PORT=5672
+        - RABBITMQ_USERNAME=guest
+        - RABBITMQ_PASSWORD=guest
+
+  # ---------------- WISHLIST SERVICE ----------------
+  wishlist-service:
+      build: ./wishlist-service
+      container_name: wishlist-service
+      ports:
+        - "8088:8088"
+      depends_on:
+        - eureka-server
+        - mysql
+      environment:
+        - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/wishlist_db
+        - SPRING_DATASOURCE_USERNAME=root
+        - SPRING_DATASOURCE_PASSWORD=root
+        - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+
+  
+  # ---------------- ADMIN SERVICE ----------------
+  admin-service:
+    build: ./admin-service
+    container_name: admin-service
+    # admin-service listens on 8095 (see admin-service application.yml)
+    ports:
+      - "8095:8095"
+    depends_on:
+      - eureka-server
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - OPENAPI_SERVER_URL=http://localhost:8095
+
+  # ---------------- RABBITMQ ----------------
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: booknest-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+# No top-level named volumes defined. MySQL uses a host bind at C:/booknest-data/mysql
+
+ 
+

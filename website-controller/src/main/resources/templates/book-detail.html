@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Book Detail</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav('books')}"></div>
+<div th:replace="~{fragments :: flash}"></div>
+<main class="page detail-layout">
+    <section class="card">
+        <p class="eyebrow" th:text="${book['genre'] ?: 'Book Detail'}">Genre</p>
+        <h1 th:text="${book['title'] ?: 'Selected Book'}">Selected Book</h1>
+        <p class="meta" th:text="${book['author'] ?: 'Unknown Author'}">Author</p>
+        <p th:text="${book['description'] ?: 'No description available for this title yet.'}">
+            Description
+        </p>
+        <div class="info-list">
+            <p class="meta">ISBN: <strong th:text="${book['isbn'] ?: 'N/A'}">N/A</strong></p>
+            <p class="meta">Publisher: <strong th:text="${book['publisher'] ?: 'N/A'}">N/A</strong></p>
+            <p class="meta">Published: <strong th:text="${book['publishedDate'] ?: 'N/A'}">N/A</strong></p>
+            <p class="meta">Average Rating: <strong th:text="${averageRating}">0.0</strong></p>
+            <p class="price">Rs. <span th:text="${book['price'] ?: 0}">0</span></p>
+        </div>
+
+        <div th:if="${signedIn}">
+            <form action="/cart/add" method="post" class="inline-form">
+                <input type="hidden" name="bookId" th:value="${book['bookId'] ?: 1}">
+                <input type="number" name="quantity" value="1" min="1">
+                <button class="button" type="submit">Add to Cart</button>
+            </form>
+
+            <form action="/wishlist/add" method="post" class="inline-form">
+                <input type="hidden" name="bookId" th:value="${book['bookId'] ?: 1}">
+                <input type="hidden" name="bookTitle" th:value="${book['title'] ?: 'Selected Book'}">
+                <input type="hidden" name="bookPrice" th:value="${book['price'] ?: 0}">
+                <button class="button secondary" type="submit">Save to Wishlist</button>
+            </form>
+        </div>
+        <div class="empty-state" th:unless="${signedIn}">
+            Please <a th:href="@{/register}">sign in</a> to add to cart, wishlist, or post reviews.
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>Write a Review</h2>
+        <div th:if="${signedIn}">
+            <form action="/review/add" method="post" class="form-grid">
+                <input type="hidden" name="bookId" th:value="${book['bookId'] ?: 1}">
+                <input name="rating" type="number" min="1" max="5" value="5" placeholder="Rating">
+                <textarea name="comment" placeholder="Share your thoughts"></textarea>
+                <button class="button" type="submit">Post Review</button>
+            </form>
+        </div>
+        <div class="empty-state" th:unless="${signedIn}">
+            Please <a th:href="@{/register}">sign in</a> to write a review.
+        </div>
+
+        <hr class="divider">
+
+        <div class="stack">
+            <p class="eyebrow">You might also like</p>
+            <div class="list">
+                <article class="list-item" th:each="bookCard : ${recommendedBooks}">
+                    <strong th:text="${bookCard['title']}">Recommended Book</strong>
+                    <p class="meta" th:text="${bookCard['author']}">Author</p>
+                    <a th:href="@{'/book/' + ${bookCard['bookId']}}">Open book</a>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="card full-width">
+        <h2>Reviews</h2>
+        <div class="list">
+            <article class="list-item" th:each="review : ${reviews}">
+                <strong th:text="${review['rating']}">5</strong>
+                <p th:text="${review['comment']}">Great read.</p>
+                <span class="muted">User <span th:text="${review['userId']}">1</span></span>
+            </article>
+        </div>
+        <div class="empty-state" th:if="${#lists.isEmpty(reviews)}">
+            This title does not have a review yet. Be the first to add one.
+        </div>
+    </section>
+</main>
+</body>
+</html>

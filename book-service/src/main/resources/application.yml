@@ -1,0 +1,31 @@
+server:
+  port: 8082
+
+spring:
+  datasource:
+    url: jdbc:mysql://mysql:3306/bookdb
+    username: root
+    password: 1234
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  application:
+    name: book-service
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+openapi:
+  server:
+    url: ${OPENAPI_SERVER_URL:http://localhost:8080/api/book}

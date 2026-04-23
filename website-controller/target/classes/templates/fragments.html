@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav th:fragment="nav(activePage)" class="topbar">
+    <div class="brand-wrap">
+        <a th:href="@{/home}" class="brand">BookNest</a>
+        <span class="brand-copy">Thymeleaf storefront for your microservices stack</span>
+    </div>
+
+    <div class="links">
+        <a th:href="@{/home}" th:classappend="${activePage == 'home'} ? ' active'">Home</a>
+        <a th:href="@{/books}" th:classappend="${activePage == 'books'} ? ' active'">Books</a>
+        <a th:href="@{/cart}" th:classappend="${activePage == 'cart'} ? ' active'">Cart</a>
+        <a th:href="@{/wishlist}" th:classappend="${activePage == 'wishlist'} ? ' active'">Wishlist</a>
+        <a th:href="@{/orders}" th:classappend="${activePage == 'orders'} ? ' active'">Orders</a>
+        <a th:href="@{/wallet}" th:classappend="${activePage == 'wallet'} ? ' active'">Wallet</a>
+        <a th:href="@{/notifications}" th:classappend="${activePage == 'notifications'} ? ' active'">Notifications</a>
+        <a th:href="@{/admin}" th:classappend="${activePage == 'admin'} ? ' active'">Admin</a>
+    </div>
+
+    <div class="nav-user">
+        <div>
+            <strong th:text="${currentUser.fullName}">BookNest User</strong>
+            <span th:text="${signedIn ? currentUser.email : 'Demo storefront mode'}">reader@booknest.com</span>
+        </div>
+        <a th:if="${signedIn}" class="button ghost" th:href="@{/logout}">Logout</a>
+        <a th:unless="${signedIn}" class="button ghost" th:href="@{/register}">Sign In</a>
+    </div>
+</nav>
+
+<div th:fragment="flash" th:if="${flashMessage}" class="flash"
+     th:classappend="${flashType == 'error'} ? ' error' : ' success'">
+    <span th:text="${flashMessage}">Action completed.</span>
+</div>
+</body>
+</html>

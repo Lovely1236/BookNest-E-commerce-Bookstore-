@@ -1,0 +1,46 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: website-controller
+  thymeleaf:
+    cache: false
+
+services:
+  auth: ${SERVICES_AUTH:http://localhost:8080/api/auth}
+  book: ${SERVICES_BOOK:http://localhost:8080/api/book}
+  cart: ${SERVICES_CART:http://localhost:8080/api/cart}
+  order: ${SERVICES_ORDER:http://localhost:8080/api/order}
+  wallet: ${SERVICES_WALLET:http://localhost:8080/api/wallet}
+  review: ${SERVICES_REVIEW:http://localhost:8080/api/review}
+  notification: ${SERVICES_NOTIFICATION:http://localhost:8080/api/notification}
+  wishlist: ${SERVICES_WISHLIST:http://localhost:8080/api/wishlist}
+
+storefront:
+  user-id: ${STOREFRONT_USER_ID:1}
+  email: ${STOREFRONT_EMAIL:reader@booknest.com}
+  full-name: ${STOREFRONT_FULL_NAME:BookNest User}
+  mobile: ${STOREFRONT_MOBILE:9999999999}
+  membership: ${STOREFRONT_MEMBERSHIP:Gold Reader}
+  wallet-id: ${STOREFRONT_WALLET_ID:1}
+
+stripe:
+  publishable: ${STRIPE_PUBLISHABLE:pk_test_placeholder}
+  secret: ${STRIPE_SECRET:sk_test_placeholder}
+  webhook:
+    secret: ${STRIPE_WEBHOOK_SECRET:}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+openapi:
+  url: ${OPENAPI_SERVER_URL:http://localhost:8080/api/website}
+  
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

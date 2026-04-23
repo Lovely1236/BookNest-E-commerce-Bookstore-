@@ -1,0 +1,124 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+      routes:
+        - id: auth-service
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=2
+        - id: auth-service-direct
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/auth/**
+        - id: book-service
+          uri: lb://BOOK-SERVICE
+          predicates:
+            - Path=/api/book/**
+          filters:
+            - StripPrefix=2
+        - id: cart-service
+          uri: lb://CART-SERVICE
+          predicates:
+            - Path=/api/cart/**
+          filters:
+            - StripPrefix=2
+        - id: order-service
+          uri: lb://ORDER-SERVICE
+          predicates:
+            - Path=/api/order/**
+          filters:
+            - StripPrefix=2
+        - id: wallet-service
+          uri: lb://WALLET-SERVICE
+          predicates:
+            - Path=/api/wallet/**
+          filters:
+            - StripPrefix=2
+        - id: review-service
+          uri: lb://REVIEW-SERVICE
+          predicates:
+            - Path=/api/review/**
+          filters:
+            - StripPrefix=2
+        - id: notification-service
+          uri: lb://NOTIFICATION-SERVICE
+          predicates:
+            - Path=/api/notification/**
+          filters:
+            - StripPrefix=2
+        - id: wishlist-service
+          uri: lb://WISHLIST-SERVICE
+          predicates:
+            - Path=/api/wishlist/**
+          filters:
+            - StripPrefix=2
+        - id: admin-swagger
+          uri: lb://ADMIN-SERVICE
+          predicates:
+          - Path=/api/admin/v3/api-docs
+          filters:
+          - RewritePath=/api/admin/v3/api-docs, /v3/api-docs
+        - id: admin-service
+          uri: lb://ADMIN-SERVICE
+          predicates:
+            - Path=/api/admin/**
+          filters:
+            - RewritePath=/api(?<segment>.*), $\{segment}
+        # website-controller route removed
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+    healthcheck:
+      enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: api-gateway
+        url: /v3/api-docs
+      - name: auth-service
+        url: /api/auth/v3/api-docs
+      - name: book-service
+        url: /api/book/v3/api-docs
+      - name: cart-service
+        url: /api/cart/v3/api-docs
+      - name: order-service
+        url: /api/order/v3/api-docs
+      - name: wallet-service
+        url: /api/wallet/v3/api-docs
+      - name: review-service
+        url: /api/review/v3/api-docs
+      - name: notification-service
+        url: /api/notification/v3/api-docs
+      - name: wishlist-service
+        url: /api/wishlist/v3/api-docs
+      # website-controller removed from Swagger list
+      - name: admin-service
+        url: /api/admin/v3/api-docs

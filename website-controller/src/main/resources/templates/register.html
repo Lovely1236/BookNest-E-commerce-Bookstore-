@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign In</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav('profile')}"></div>
+<div th:replace="~{fragments :: flash}"></div>
+<main class="page two-col">
+    <section class="card">
+        <p class="eyebrow">Create Account</p>
+        <h1>Start your BookNest profile</h1>
+        <form action="/register" method="post" class="form-grid">
+            <div>
+                <label for="fullName">Full name</label>
+                <input id="fullName" name="fullName" placeholder="Full name" required>
+            </div>
+            <div>
+                <label for="registerEmail">Email</label>
+                <input id="registerEmail" name="email" type="email" placeholder="Email" required>
+            </div>
+            <div>
+                <label for="mobile">Mobile</label>
+                <input id="mobile" name="mobile" placeholder="Mobile number">
+            </div>
+            <div>
+                <label for="registerPassword">Password</label>
+                <input id="registerPassword" name="password" type="password" placeholder="Password" required>
+            </div>
+            <button class="button" type="submit">Register</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <p class="eyebrow">Sign In</p>
+        <h2>Use an existing account</h2>
+        <form action="/login" method="post" class="form-grid">
+            <div>
+                <label for="loginEmail">Email</label>
+                <input id="loginEmail" name="email" type="email" placeholder="Email" required>
+            </div>
+            <div>
+                <label for="loginPassword">Password</label>
+                <input id="loginPassword" name="password" type="password" placeholder="Password" required>
+            </div>
+            <button class="button secondary" type="submit">Login</button>
+        </form>
+        <div class="oauth">
+            <p class="muted">Or sign in with</p>
+            <a class="button ghost" th:href="${authLoginUrl}">GitHub</a>
+        </div>
+    </section>
+</main>
+</body>
+</html>

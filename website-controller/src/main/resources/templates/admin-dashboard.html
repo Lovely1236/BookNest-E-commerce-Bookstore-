@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav('admin')}"></div>
+<div th:replace="~{fragments :: flash}"></div>
+<main class="page">
+    <div class="section-head">
+        <div>
+            <p class="eyebrow">Admin Dashboard</p>
+            <h1>Service-backed control room</h1>
+        </div>
+        <div class="actions">
+            <a class="button" th:href="@{/admin/addBook}">Add Book</a>
+            <a class="button secondary" th:href="@{/admin/inventory}">Inventory</a>
+        </div>
+    </div>
+    <div class="grid four">
+        <section class="card"><span>Books</span><strong th:text="${bookCount}">0</strong></section>
+        <section class="card"><span>Orders</span><strong th:text="${orderCount}">0</strong></section>
+        <section class="card"><span>Reviews</span><strong th:text="${reviewCount}">0</strong></section>
+        <section class="card"><span>Wishlists</span><strong th:text="${wishlistCount}">0</strong></section>
+    </div>
+    <section class="dashboard-layout">
+        <article class="card">
+            <div class="section-head">
+                <h2>Recent Books</h2>
+                <a th:href="@{/admin/inventory}">View all</a>
+            </div>
+            <div class="table-stack">
+                <div class="list-item" th:each="book : ${recentBooks}">
+                    <strong th:text="${book['title']}">Book</strong>
+                    <span class="meta" th:text="${book['author']}">Author</span>
+                </div>
+            </div>
+        </article>
+
+        <article class="card">
+            <div class="section-head">
+                <h2>Recent Orders</h2>
+                <a th:href="@{/admin/orders}">Manage orders</a>
+            </div>
+            <div class="table-stack">
+                <div class="list-item" th:each="order : ${recentOrders}">
+                    <strong>Order <span th:text="${order['orderId']}">1</span></strong>
+                    <span class="meta" th:text="${order['orderStatus']}">PLACED</span>
+                </div>
+            </div>
+        </article>
+    </section>
+</main>
+</body>
+</html>

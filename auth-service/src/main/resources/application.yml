@@ -1,0 +1,49 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: auth-service
+
+  datasource:
+    url: jdbc:mysql://mysql:3306/booknest_auth
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: Ov23liVR38qJx9it6QHR
+            client-secret: be7236d59464f843adf483dc36e2560b7c750a3a
+            scope: user:email
+            redirect-uri: http://localhost:8080/api/auth/login/oauth2/code/github
+        provider:
+          github:
+            user-name-attribute: login
+  # The UI/website URL to redirect OAuth success to (change for production)
+website:
+  url: http://localhost:5173
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+openapi:
+  server:
+    url: ${OPENAPI_SERVER_URL:http://localhost:8080/api/auth}
+
+

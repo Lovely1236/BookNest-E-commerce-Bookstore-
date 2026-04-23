@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Profile</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav('profile')}"></div>
+<div th:replace="~{fragments :: flash}"></div>
+<main class="page narrow">
+    <section class="card">
+        <p class="eyebrow">Profile</p>
+        <h1 th:text="${profile['fullName']}">BookNest User</h1>
+        <div class="info-list">
+            <p><strong>Email:</strong> <span th:text="${profile['email']}">reader@booknest.com</span></p>
+            <p><strong>Mobile:</strong> <span th:text="${profile['mobile']}">9999999999</span></p>
+            <p><strong>Membership:</strong> <span th:text="${profile['membership']}">Gold Reader</span></p>
+            <p><strong>User ID:</strong> <span th:text="${profile['userId']}">1</span></p>
+        </div>
+
+        <div class="empty-state" th:if="${!profile['authenticated']}">
+            Sign in to sync this profile from the auth service and unlock password updates.
+        </div>
+
+        <form action="/profile/update" method="post" class="form-grid" th:if="${profile['authenticated']}">
+            <div>
+                <label for="newPassword">New password</label>
+                <input id="newPassword" name="newPassword" type="password" placeholder="Choose a new password" required>
+            </div>
+            <button class="button" type="submit">Update Password</button>
+        </form>
+    </section>
+</main>
+</body>
+</html>

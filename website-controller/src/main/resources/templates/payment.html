@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Payment</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav('wallet')}"></div>
+<div th:replace="~{fragments :: flash}"></div>
+<main class="page two-col">
+    <section class="card">
+        <p class="eyebrow">Cash on Delivery</p>
+        <h2>Place order without paying now</h2>
+        <p class="meta">Your cart total is Rs. <span th:text="${cartTotal}">0</span>. The order service will create one order per cart item.</p>
+        <form action="/payment/cod" method="post" class="form-grid">
+            <button class="button" type="submit">Place COD Order</button>
+        </form>
+    </section>
+    <section class="card">
+        <p class="eyebrow">Card / Stripe</p>
+        <h2>Pay securely with Stripe</h2>
+        <p class="meta">Total: Rs. <span th:text="${cartTotal}">0</span></p>
+        <button id="stripe-pay" class="button" type="button">Pay with Stripe</button>
+        <script src="https://js.stripe.com/v3/"></script>
+        <script th:inline="javascript">
+            /*<![CDATA[*/
+            const publishableKey = /*[[${@environment.getProperty('stripe.publishable', '')}]]*/ '';
+            const payBtn = document.getElementById('stripe-pay');
+            payBtn?.addEventListener('click', async () => {
+                const resp = await fetch('/payment/stripe', {method: 'POST'});
+                const data = await resp.json();
+                if (data.error) {
+                    alert('Payment error: ' + data.error);
+                    return;
+                }
+                const stripe = Stripe(publishableKey);
+                stripe.redirectToCheckout({sessionId: data.id});
+            });
+            /*]]>*/
+        </script>
+    </section>
+    <section class="card">
+        <p class="eyebrow">Wallet</p>
+        <h2>Pay instantly using your wallet</h2>
+        <p class="meta">Wallet ID: <span th:text="${wallet['walletId'] ?: 'N/A'}">1</span></p>
+        <p class="meta">Current balance: Rs. <span th:text="${wallet['currentBalance'] ?: 0}">0</span></p>
+        <p class="meta">Required amount: Rs. <span th:text="${cartTotal}">0</span></p>
+        <form action="/payment/pay" method="post" class="form-grid">
+            <button class="button secondary" type="submit">Pay with Wallet</button>
+        </form>
+        <div class="actions">
+            <a class="button ghost" th:href="@{/wallet}">Open Wallet</a>
+        </div>
+    </section>
+</main>
+</body>
+</html>

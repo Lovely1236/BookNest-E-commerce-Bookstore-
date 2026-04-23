@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Books</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav('books')}"></div>
+<div th:replace="~{fragments :: flash}"></div>
+<main class="page">
+    <div class="section-head">
+        <div>
+            <p class="eyebrow">Catalog</p>
+            <h1>Browse Books</h1>
+        </div>
+        <a th:href="@{/featured}">Featured Shelf</a>
+    </div>
+
+    <section class="card">
+        <form class="field-grid" action="/books" method="get">
+            <div>
+                <label for="keyword">Search by title or author</label>
+                <input id="keyword" name="keyword" th:value="${keyword}" placeholder="Try thriller, history, Orwell...">
+            </div>
+            <div>
+                <label for="genre">Filter by genre</label>
+                <select id="genre" name="genre">
+                    <option value="">All genres</option>
+                    <option th:each="genreOption : ${genres}"
+                            th:value="${genreOption}"
+                            th:text="${genreOption}"
+                            th:selected="${genreOption == selectedGenre}">
+                        Genre
+                    </option>
+                </select>
+            </div>
+            <div class="actions">
+                <button class="button" type="submit">Apply Filters</button>
+                <a class="button ghost" th:href="@{/books}">Reset</a>
+            </div>
+        </form>
+    </section>
+
+    <div class="grid">
+        <article class="card book-card" th:each="book : ${books}">
+            <span class="book-badge" th:text="${book['genre'] ?: 'Catalog'}">Catalog</span>
+            <div>
+                <h3 th:text="${book['title'] ?: 'Untitled Book'}">Book</h3>
+                <p class="meta" th:text="${book['author'] ?: 'Unknown Author'}">Author</p>
+            </div>
+            <p class="meta" th:text="${book['description'] ?: 'No description available yet.'}">
+                Description
+            </p>
+            <div class="list-item-header">
+                <p class="price">Rs. <span th:text="${book['price'] ?: 0}">0</span></p>
+                <span class="meta">Stock: <span th:text="${book['stock'] ?: 0}">0</span></span>
+            </div>
+            <div class="actions">
+                <a class="button secondary" th:href="@{'/book/' + ${book['bookId']}}">View</a>
+            </div>
+        </article>
+    </div>
+    <div class="empty-state" th:if="${#lists.isEmpty(books)}">
+        No books matched the current filter. Try a different keyword or clear the genre filter.
+    </div>
+</main>
+</body>
+</html>

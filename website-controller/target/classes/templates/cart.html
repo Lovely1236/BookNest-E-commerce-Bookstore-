@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Cart</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav('cart')}"></div>
+<div th:replace="~{fragments :: flash}"></div>
+<main class="page two-col">
+    <section class="card">
+        <div class="section-head">
+            <div>
+                <p class="eyebrow">Cart</p>
+                <h1>Your Shopping Cart</h1>
+            </div>
+            <form action="/cart/clear" method="post" th:if="${!#lists.isEmpty(cartItems) and signedIn}">
+                <button class="button ghost" type="submit">Clear Cart</button>
+            </form>
+            <div th:if="${!#lists.isEmpty(cartItems) and !signedIn}" class="empty-state">
+                Please <a th:href="@{/register}">sign in</a> to modify your cart or proceed to checkout.
+            </div>
+        </div>
+
+        <div class="list" th:if="${!#lists.isEmpty(cartItems)}">
+            <article class="list-item" th:each="item : ${cartItems}">
+                <div class="list-item-header">
+                    <div>
+                        <strong th:text="${item['bookTitle']}">Book</strong>
+                        <p class="meta">Book ID: <span th:text="${item['bookId']}">1</span></p>
+                    </div>
+                    <p class="price">Rs. <span th:text="${item['price']}">0</span></p>
+                </div>
+
+                <form action="/cart/update" method="post" class="inline-form" th:if="${signedIn}">
+                    <input type="hidden" name="itemId" th:value="${item['itemId']}">
+                    <input type="number" name="quantity" min="1" th:value="${item['quantity']}">
+                    <button class="button secondary" type="submit">Update Quantity</button>
+                </form>
+
+                <div th:if="${!signedIn}">
+                    <span class="muted">Sign in to edit this item</span>
+                </div>
+
+                <form action="/cart/remove" method="post" th:if="${signedIn}">
+                    <input type="hidden" name="itemId" th:value="${item['itemId']}">
+                    <button class="button ghost" type="submit">Remove</button>
+                </form>
+            </article>
+        </div>
+
+        <div class="empty-state" th:if="${#lists.isEmpty(cartItems)}">
+            Your cart is empty. Browse the catalog and add a book to continue.
+        </div>
+    </section>
+
+    <section class="card summary-box">
+        <p class="eyebrow">Summary</p>
+        <div class="summary-row">
+            <span>Items in cart</span>
+            <strong th:text="${#lists.size(cartItems)}">0</strong>
+        </div>
+        <div class="summary-row">
+            <span>Total</span>
+            <strong>Rs. <span th:text="${cartTotal}">0</span></strong>
+        </div>
+        <div class="actions">
+            <a class="button" th:href="@{/checkout}" th:if="${!#lists.isEmpty(cartItems)}">Proceed to Checkout</a>
+            <a class="button ghost" th:href="@{/books}">Keep Shopping</a>
+        </div>
+    </section>
+</main>
+</body>
+</html>

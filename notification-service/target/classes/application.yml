@@ -1,0 +1,40 @@
+server:
+  port: 8087
+
+spring:
+  application:
+    name: notification-service
+  datasource:
+    url: jdbc:mysql://mysql:3306/notification_db
+    username: root
+    password: root
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  rabbitmq:
+    host: ${RABBITMQ_HOST:rabbitmq}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+openapi:
+  server:
+    url: ${OPENAPI_SERVER_URL:http://localhost:8080/api/notification}
+ 
+notification:
+  exchange: notifications.exchange
+  queue: notifications.queue
+  routing-key: notifications.routingkey

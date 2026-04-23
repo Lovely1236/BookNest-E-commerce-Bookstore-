@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Orders</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<div th:replace="~{fragments :: nav('admin')}"></div>
+<div th:replace="~{fragments :: flash}"></div>
+<main class="page">
+    <section class="card">
+        <p class="eyebrow">Orders</p>
+        <h1>Manage Orders</h1>
+        <div class="list">
+            <article class="list-item" th:each="order : ${orders}">
+                <div class="list-item-header">
+                    <p>Order <strong th:text="${order['orderId']}">1</strong></p>
+                    <span class="status-badge"
+                          th:classappend="${order['orderStatus'] == 'DELIVERED' || order['orderStatus'] == 'PAID'} ? ' paid' : ' pending'"
+                          th:text="${order['orderStatus']}">PLACED</span>
+                </div>
+                <p class="meta">Book: <span th:text="${order['book'] != null ? order['book']['productName'] : 'N/A'}">Book</span></p>
+                <form action="/admin/orders/status" method="post" class="inline-form">
+                    <input type="hidden" name="orderId" th:value="${order['orderId']}">
+                    <select name="status">
+                        <option value="PLACED">PLACED</option>
+                        <option value="PROCESSING">PROCESSING</option>
+                        <option value="SHIPPED">SHIPPED</option>
+                        <option value="DELIVERED">DELIVERED</option>
+                    </select>
+                    <button class="button secondary" type="submit">Update</button>
+                </form>
+            </article>
+        </div>
+    </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,30 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: review-service
+  datasource:
+    url: jdbc:mysql://mysql:3306/review_db
+    username: root
+    password: root
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+openapi:
+  server:
+    url: ${OPENAPI_SERVER_URL:http://localhost:8080/api/review}
