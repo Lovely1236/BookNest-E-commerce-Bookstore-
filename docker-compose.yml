@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
 
 # ---------------- MYSQL ----------------
@@ -188,7 +186,6 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
-# No top-level named volumes defined. MySQL uses a host bind at C:/booknest-data/mysql
 
- 
+# MySQL still uses a host bind at C:/booknest-data/mysql.
 

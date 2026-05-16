@@ -42,6 +42,9 @@ public class SecurityConfig {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Value("${app.security.oauth2.enabled:true}")
+    private boolean oauth2Enabled;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -124,10 +127,15 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
-                .oauth2Login(oauth -> oauth
-                        .successHandler(oauth2SuccessHandler)
-                )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
+        if (oauth2Enabled) {
+            http.oauth2Login(oauth -> oauth
+                    .successHandler(oauth2SuccessHandler)
+            );
+        } else {
+            logger.info("OAuth2 login is disabled for this environment.");
+        }
 
         return http.build();
     }

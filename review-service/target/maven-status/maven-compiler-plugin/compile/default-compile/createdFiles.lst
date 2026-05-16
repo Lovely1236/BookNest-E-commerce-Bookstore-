@@ -1,0 +1,8 @@
+org\example\reviewservice\repository\ReviewRepository.class
+org\example\reviewservice\ReviewServiceApplication.class
+org\example\reviewservice\service\impl\ReviewServiceImpl.class
+org\example\reviewservice\controller\ReviewResource.class
+org\example\reviewservice\entity\Review.class
+org\example\reviewservice\service\ReviewService.class
+org\example\reviewservice\config\OpenApiConfig.class
+org\example\reviewservice\config\CorsConfig.class
